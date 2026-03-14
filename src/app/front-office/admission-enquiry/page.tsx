@@ -1,0 +1,539 @@
+
+"use client"
+
+import { useState, useMemo, useEffect, useRef } from "react"
+import { Sidebar } from "@/components/layout/sidebar"
+import { TopNav } from "@/components/layout/top-nav"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { 
+  X, 
+  Plus, 
+  FileSpreadsheet,
+  FileText,
+  Search,
+  Edit2,
+  Trash2,
+  Settings2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Info,
+  UserPlus,
+  Check,
+  Upload,
+  Download,
+  Filter,
+  MessageCircle,
+  X as CloseIcon,
+  History
+} from "lucide-react"
+import { useFirebase } from "@/firebase"
+import { ref, onValue, push, set, remove, off, update } from "firebase/database"
+import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { useResolvedId } from "@/hooks/use-resolved-id"
+import { usePathname } from "next/navigation"
+import * as XLSX from "xlsx"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+import { format, isWithinInterval, startOfDay, endOfDay, parseISO } from "date-fns"
+
+const STATUS_OPTIONS = [
+  { id: 'Active', value: 'Active' },
+  { id: 'Inactive', value: 'Inactive' },
+  { id: 'Done', value: 'Done' },
+  { id: 'Rejected', value: 'Rejected' },
+]
+
+export default function AdmissionEnquiryPage() {
+  const pathname = usePathname()
+  const isPortal = (pathname.startsWith('/branch') && !pathname.startsWith('/branch-management')) || 
+                   pathname.startsWith('/staff') || 
+                   (pathname.startsWith('/student') && !pathname.startsWith('/student-information'))
+
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
+  const [convertingEnquiry, setConvertingEnquiry] = useState<any>(null)
+  
+  const [searchTerm, setSearchTerm] = useState("")
+  const [enquiries, setEnquiries] = useState<any[]>([])
+  const [dropdownData, setDropdownData] = useState<Record<string, any[]>>({})
+  const [editingItem, setEditingItem] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  const [isManageOpen, setIsManageOpen] = useState(false)
+  const [activeManageField, setActiveManageField] = useState<{key: string, label: string} | null>(null)
+  const [newOptionValue, setNewOptionValue] = useState("")
+  const [editingOptionId, setEditingOptionId] = useState<string | null>(null)
+  
+  const [itemToDelete, setItemToDelete] = useState<any>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const [instituteName, setInstituteName] = useState("Your Institute")
+
+  // Multi-Select Filter States
+  const [filterSources, setFilterSources] = useState<string[]>([])
+  const [filterEnquiryFors, setFilterEnquiryFors] = useState<string[]>([])
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([])
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
+
+  const { database } = useFirebase()
+  const { resolvedId, staffId, branchId, isStaff, isBranch } = useResolvedId()
+  const { toast } = useToast()
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const today = useMemo(() => new Date().toISOString().split('T')[0], [])
+
+  useEffect(() => {
+    if (!database || !resolvedId) return
+    const rootPath = `Institutes/${resolvedId}`
+    onValue(ref(database, `${rootPath}/enquiries`), (snapshot) => {
+      const data = snapshot.val()
+      if (data) setEnquiries(Object.keys(data).map(key => ({ ...data[key], id: key })).reverse())
+      else setEnquiries([])
+      setIsLoading(false)
+    })
+    onValue(ref(database, `${rootPath}/dropdowns`), (snapshot) => {
+      const data = snapshot.val() || {}
+      const processed: Record<string, any[]> = {}
+      Object.keys(data).forEach(key => { processed[key] = Object.keys(data[key]).map(id => ({ id, value: data[key][id].value })) })
+      setDropdownData(processed)
+    })
+    onValue(ref(database, `${rootPath}/profile/instituteName`), (s) => {
+      if (s.exists()) setInstituteName(s.val())
+    })
+  }, [database, resolvedId])
+
+  const hasActiveFilters = useMemo(() => {
+    return filterSources.length > 0 || filterEnquiryFors.length > 0 || filterStatuses.length > 0 || fromDate !== "" || toDate !== "" || searchTerm !== ""
+  }, [filterSources, filterEnquiryFors, filterStatuses, fromDate, toDate, searchTerm])
+
+  const filteredEnquiries = useMemo(() => {
+    let list = enquiries
+    if (isStaff && staffId) list = list.filter(e => e.createdBy === staffId)
+    else if (isBranch && branchId) list = list.filter(e => e.branchId === branchId)
+
+    return list.filter(e => {
+      const matchSearch = !searchTerm || e.enquirerFirstName?.toLowerCase().includes(searchTerm.toLowerCase()) || e.enquirerPhoneNumber?.includes(searchTerm)
+      const matchSource = filterSources.length === 0 || filterSources.includes(e.source)
+      const matchFor = filterEnquiryFors.length === 0 || filterEnquiryFors.includes(e.courseName)
+      const matchStatus = filterStatuses.length === 0 || filterStatuses.includes(e.status)
+      
+      let matchDate = true
+      if (fromDate || toDate) {
+        try {
+          const enquiryDate = parseISO(e.enquiryDate)
+          const start = fromDate ? startOfDay(parseISO(fromDate)) : null
+          const end = toDate ? endOfDay(parseISO(toDate)) : null
+          
+          if (start && end) matchDate = isWithinInterval(enquiryDate, { start, end })
+          else if (start) matchDate = enquiryDate >= start
+          else if (end) matchDate = enquiryDate <= end
+        } catch (err) {
+          matchDate = true
+        }
+      }
+
+      return matchSearch && matchSource && matchFor && matchStatus && matchDate
+    })
+  }, [enquiries, searchTerm, filterSources, filterEnquiryFors, filterStatuses, fromDate, toDate, isStaff, staffId, isBranch, branchId])
+
+  const stats = useMemo(() => {
+    return {
+      active: filteredEnquiries.filter(e => e.status === 'Active').length,
+      inactive: filteredEnquiries.filter(e => e.status === 'Inactive').length,
+      total: filteredEnquiries.length,
+      rejected: filteredEnquiries.filter(e => e.status === 'Rejected').length
+    }
+  }, [filteredEnquiries])
+
+  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage)
+  const paginatedEnquiries = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredEnquiries.slice(start, start + itemsPerPage)
+  }, [filteredEnquiries, currentPage])
+
+  const handleSaveEnquiry = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!resolvedId || !database || isSubmitting) return
+    setIsSubmitting(true)
+    const formData = new FormData(e.currentTarget)
+    const enquiryData = {
+      enquirerFirstName: formData.get("name"),
+      enquirerEmail: formData.get("email"),
+      enquirerPhoneNumber: formData.get("phone"),
+      courseName: formData.get("courseName"),
+      enquiryDate: formData.get("enquiryDate") || today,
+      followUpDate: formData.get("followUpDate"),
+      source: formData.get("source"),
+      status: formData.get("status") || "Active",
+      demoTaken: formData.get("demoTaken"),
+      enquiryCategory: formData.get("enquiryCategory"),
+      city: formData.get("city"),
+      state: formData.get("state"),
+      address: formData.get("address"),
+      remark: formData.get("remark"),
+      branchId: isBranch ? branchId : (editingItem?.branchId || null),
+      createdBy: isStaff ? staffId : isBranch ? branchId : 'admin',
+      updatedAt: Date.now()
+    }
+    const dbPath = `Institutes/${resolvedId}/enquiries`
+    if (editingItem) await update(ref(database, `${dbPath}/${editingItem.id}`), enquiryData)
+    else await set(push(ref(database, dbPath)), { ...enquiryData, createdAt: Date.now() })
+    setIsModalOpen(false); setEditingItem(null); setIsSubmitting(false);
+    toast({ title: "Enquiry Updated" })
+  }
+
+  const handleDelete = async () => {
+    if (!database || !resolvedId || !itemToDelete) return
+    setIsDeleting(true)
+    try {
+      const rootPath = `Institutes/${resolvedId}`
+      await set(push(ref(database, `${rootPath}/trash/enquiries`)), { ...itemToDelete, deletedAt: Date.now() })
+      await remove(ref(database, `${rootPath}/enquiries/${itemToDelete.id}`))
+      toast({ title: "Moved To Trash" })
+    } catch (err) {
+      toast({ variant: "destructive", title: "Delete Failed" })
+    } finally {
+      setIsDeleting(false); setItemToDelete(null);
+    }
+  }
+
+  const handleConvertToAdmission = async () => {
+    if (!database || !resolvedId || !convertingEnquiry) return
+    setIsSubmitting(true)
+    try {
+      const rootPath = `Institutes/${resolvedId}`
+      const regNo = `REG-${Date.now().toString().slice(-6)}`
+      const admissionData = {
+        studentName: convertingEnquiry.enquirerFirstName,
+        email: convertingEnquiry.enquirerEmail || "",
+        mobile: convertingEnquiry.enquirerPhoneNumber,
+        course: convertingEnquiry.courseName,
+        address: convertingEnquiry.address || "",
+        source: convertingEnquiry.source || "Direct",
+        admissionDate: today,
+        admissionNo: regNo,
+        status: "Active",
+        loginStatus: true,
+        password: "password123",
+        netFees: 0,
+        totalFees: 0,
+        discount: 0,
+        branchId: convertingEnquiry.branchId || null,
+        createdBy: convertingEnquiry.convertingEnquiry || 'admin',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+      await push(ref(database, `${rootPath}/admissions`), admissionData)
+      await update(ref(database, `${rootPath}/enquiries/${convertingEnquiry.id}`), { status: "Done", convertedAt: Date.now() })
+      toast({ title: "Lead Converted" })
+      setIsConvertDialogOpen(false); setConvertingEnquiry(null);
+    } catch (err) { toast({ variant: "destructive", title: "Error" }) }
+    finally { setIsSubmitting(false) }
+  }
+
+  const handleSaveOption = () => {
+    if (!newOptionValue.trim() || !resolvedId || !database || !activeManageField) return
+    const dbPath = `Institutes/${resolvedId}/dropdowns/${activeManageField.key}`
+    if (editingOptionId) {
+      update(ref(database, `${dbPath}/${editingOptionId}`), { value: newOptionValue.trim() })
+        .then(() => { setNewOptionValue(""); setEditingOptionId(null); })
+    } else {
+      push(ref(database, dbPath), { value: newOptionValue.trim() }).then(() => setNewOptionValue(""))
+    }
+  }
+
+  const resetFilters = () => {
+    setFilterSources([])
+    setFilterEnquiryFors([])
+    setFilterStatuses([])
+    setFromDate("")
+    setToDate("")
+    setSearchTerm("")
+    setCurrentPage(1)
+  }
+
+  const openManageModal = (key: string, label: string) => { setActiveManageField({ key, label }); setNewOptionValue(""); setEditingOptionId(null); setIsManageOpen(true); }
+
+  const toggleMultiSelect = (state: string[], setter: (v: string[]) => void, value: string) => {
+    if (state.includes(value)) setter(state.filter(v => v !== value))
+    else setter([...state, value])
+  }
+
+  if (isLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase animate-pulse tracking-[0.2em]">Connecting to inquiry node...</div>
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex font-body">
+      <Sidebar />
+      <div className={cn("flex flex-col flex-1 min-w-0", !isPortal && "lg:pl-[300px]")}>
+        <TopNav />
+        <main className="flex-1 p-8 space-y-10 animate-in fade-in duration-500 w-full overflow-x-hidden">
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+            <div>
+              <h2 className="text-[26px] font-normal text-black font-public-sans tracking-tight leading-none uppercase">Admission enquiry</h2>
+              <p className="text-sm text-zinc-400 font-medium mt-1">Capture and track student interest</p>
+            </div>
+            <Dialog open={isModalOpen} onOpenChange={(o) => { setIsModalOpen(o); if(!o) setEditingItem(null); }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingItem(null)} className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-bold text-sm gap-2 border-none shadow-lg active:scale-95 transition-all tracking-widest">
+                  Add New
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl p-0 border border-zinc-200 rounded-[32px] overflow-hidden bg-white shadow-2xl sm:max-w-[850px]">
+                <div className="bg-white px-10 py-6 border-b border-zinc-100"><DialogTitle className="text-xl font-black text-zinc-800">Add New Enquiry</DialogTitle></div>
+                <ScrollArea className="max-h-[85vh]">
+                  <form onSubmit={handleSaveEnquiry} className="p-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                      <FormItem label="Name" name="name" defaultValue={editingItem?.enquirerFirstName} required />
+                      <FormItem label="Email" name="email" type="email" defaultValue={editingItem?.enquirerEmail} />
+                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Phone *</Label><Input name="phone" type="tel" pattern="[0-9]{10}" maxLength={10} onInput={(e) => e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')} defaultValue={editingItem?.enquirerPhoneNumber} required placeholder="Phone" className="rounded-xl border-zinc-200 h-12 font-bold text-black text-sm" /></div>
+                      <FormSelect label="Enquire For Course Or Class" name="courseName" defaultValue={editingItem?.courseName} options={dropdownData['course'] || []} onManage={() => openManageModal('course', 'Course')} required />
+                      <FormItem label="Enquiry Date" name="enquiryDate" type="date" defaultValue={editingItem?.enquiryDate || today} required />
+                      <FormItem label="Follow Up Date" name="followUpDate" type="date" defaultValue={editingItem?.followUpDate} />
+                      <FormSelect label="Source" name="source" defaultValue={editingItem?.source || "Direct"} options={dropdownData['source'] || []} onManage={() => openManageModal('source', 'Source')} />
+                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Status</Label><Select name="status" defaultValue={editingItem?.status || "Active"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem><SelectItem value="Done">Done</SelectItem><SelectItem value="Rejected">Rejected</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Demo Taken</Label><Select name="demoTaken" defaultValue={editingItem?.demoTaken || "No"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent></Select></div>
+                      <FormSelect label="Enquiry Category" name="enquiryCategory" defaultValue={editingItem?.enquiryCategory || "General"} options={dropdownData['enquiryCategory'] || []} onManage={() => openManageModal('enquiryCategory', 'Category')} />
+                      <FormItem label="City" name="city" defaultValue={editingItem?.city} />
+                      <FormItem label="State" name="state" defaultValue={editingItem?.state} />
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Address</Label><Textarea name="address" defaultValue={editingItem?.address} placeholder="Address" className="rounded-xl min-h-[80px] border-zinc-200 font-bold" /></div>
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Remark</Label><Textarea name="remark" defaultValue={editingItem?.remark} placeholder="Remark" className="rounded-xl min-h-[100px] border-zinc-200 font-bold" /></div>
+                    </div>
+                    <Button type="submit" disabled={isSubmitting} className="bg-primary hover:opacity-90 text-white rounded-xl h-14 px-12 font-black uppercase text-[10px] tracking-widest shadow-xl border-none active:scale-95 transition-all">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Submit Now</Button>
+                  </form>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <Card className="border-none shadow-sm rounded-2xl bg-white p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-public-sans text-black tracking-tight">Select Criteria</h3>
+              {hasActiveFilters && (
+                <Button onClick={resetFilters} variant="ghost" className="h-8 px-4 text-rose-500 hover:bg-rose-50 rounded-lg text-[10px] font-black tracking-widest gap-2">
+                  Reset Filters <X className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+              <MultiCriteriaBox label="Enquiry Source" selected={filterSources} onToggle={(v) => toggleMultiSelect(filterSources, setFilterSources, v)} options={dropdownData['source'] || []} />
+              <MultiCriteriaBox label="Enquiry For" selected={filterEnquiryFors} onToggle={(v) => toggleMultiSelect(filterEnquiryFors, setFilterEnquiryFors, v)} options={dropdownData['course'] || []} />
+              <MultiCriteriaBox label="Enquiry Status" selected={filterStatuses} onToggle={(v) => toggleMultiSelect(filterStatuses, setFilterStatuses, v)} options={STATUS_OPTIONS} />
+              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest">Enquiry From Date</Label><Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
+              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest">Enquiry To Date</Label><Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
+            </div>
+          </Card>
+
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+              <div className="flex items-center gap-6">
+                <div className="relative group w-full md:w-80">
+                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
+                  <Input 
+                    placeholder="Search Lead..." 
+                    value={searchTerm} 
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} 
+                    className="pl-10 h-10 border-zinc-200 rounded-lg text-xs font-bold text-zinc-600 focus-visible:ring-primary shadow-sm transition-none bg-white" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+              <div className="overflow-x-auto scrollbar-thin">
+                <Table className="min-w-[2800px]">
+                  <TableHeader className="bg-zinc-50/50">
+                    <TableRow className="border-zinc-100 hover:bg-transparent">
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 pl-10 w-20">Sr No.</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Action</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Name</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Email</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Phone</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Program Enquiry</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Enquiry Date</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Follow Up</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Source</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 text-center">Status</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 text-center">Demo</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Category</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">City</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">State</TableHead>
+                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Address</TableHead>
+                      <TableHead className="text-right pr-10 text-[13px] font-public-sans text-black tracking-widest h-14">Remark</TableHead>
+                    </TableRow>
+                  </TableHeader>  
+                  <TableBody>
+                    {paginatedEnquiries.map((row, index) => (
+                      <TableRow key={row.id} className="border-zinc-50 hover:bg-zinc-50/30 transition-none group">
+                        <TableCell className="text-base font-black text-black font-public-sans pl-10">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <button disabled={row.status === 'Done'} onClick={() => { setConvertingEnquiry(row); setIsConvertDialogOpen(true); }} className={cn("p-1", row.status === 'Done' ? "opacity-20 grayscale" : "text-blue-500 hover:bg-blue-50 rounded-md")} title="Convert to Admission"><UserPlus className="h-5 w-5" /></button>
+                            <button onClick={() => { setEditingItem(row); setIsModalOpen(true); }} className="p-1 text-zinc-400 hover:text-blue-500 transition-none" title="Edit Enquiry"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => { setItemToDelete(row); }} className="p-1 text-zinc-400 hover:text-rose-500 transition-none" title="Delete Enquiry"><Trash2 className="h-4 w-4" /></button>
+                          </div>
+                        </TableCell>
+                        <TableCell><span className="text-sm font-bold text-black font-public-sans tracking-tight whitespace-nowrap">{row.enquirerFirstName}</span></TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans lowercase">{row.enquirerEmail || '-'}</TableCell>
+                        <TableCell className="text-base font-bold text-black font-public-sans font-mono tracking-tighter">{row.enquirerPhoneNumber}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans">{row.courseName}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{row.enquiryDate}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{row.followUpDate}</TableCell>
+                        <TableCell className="text-sm font-bold text-black font-public-sans">{row.source || '-'}</TableCell>
+                        <TableCell className="text-center"><Badge className={cn("rounded-lg px-2.5 py-0.5 text-[9px] font-black border-none shadow-none font-public-sans", row.status === 'Done' ? "bg-emerald-50 text-emerald-600" : row.status === 'Rejected' ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600")}>{row.status || 'Active'}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge variant="outline" className="text-[10px] font-black border-zinc-100 text-black font-public-sans">{row.demoTaken || 'No'}</Badge></TableCell>
+                        <TableCell className="text-xs font-normal text-black font-public-sans">{row.enquiryCategory || '-'}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans">{row.city || '-'}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans">{row.state || '-'}</TableCell>
+                        <TableCell className="text-xs font-normal text-black font-public-sans max-w-[200px] truncate">{row.address || '-'}</TableCell>
+                        <TableCell className="text-right pr-10 text-xs text-black font-public-sans italic">{row.remark || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
+              <p className="text-[10px] font-black text-zinc-400 tracking-widest">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredEnquiries.length)} of {filteredEnquiries.length} entries</p>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="h-9 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"><ChevronLeft className="w-4 h-4 mr-2" /> Previous</Button>
+                  <div className="flex items-center gap-2">{[...Array(totalPages)].map((_, i) => (<button key={i} onClick={() => setCurrentPage(i + 1)} className={cn("w-10 h-10 rounded-xl text-[10px] font-black transition-all", currentPage === i + 1 ? "bg-primary text-white shadow-xl scale-110" : "bg-white text-zinc-400 border border-zinc-100 hover:bg-zinc-50")}>{i + 1}</button>))}</div>
+                  <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="h-9 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all">Next <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <AlertDialog open={!!itemToDelete} onOpenChange={(o) => { if(!o) setItemToDelete(null) }}>
+            <AlertDialogContent className="rounded-[32px] border-none shadow-2xl p-10 bg-white">
+              <AlertDialogHeader className="space-y-4">
+                <div className="w-16 h-16 rounded-[24px] bg-rose-50 flex items-center justify-center text-rose-500 shadow-inner"><Trash2 className="w-8 h-8" /></div>
+                <div><AlertDialogTitle className="text-2xl font-black text-zinc-800 tracking-tight">Move To Trash?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Are you sure you want to move the enquiry for <span className="text-zinc-900">"{itemToDelete?.enquirerFirstName}"</span> to the institutional trash? This can be restored later.</AlertDialogDescription></div>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="mt-8 gap-3">
+                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black h-12 px-8">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-rose-500 hover:bg-rose-600 text-white transition-all active:scale-95">
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Move To Trash"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+            <AlertDialogContent className="rounded-[32px] border-none shadow-2xl p-10 bg-white">
+              <AlertDialogHeader className="space-y-4">
+                <div className="w-16 h-16 rounded-[24px] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner"><UserPlus className="w-8 h-8" /></div>
+                <div><AlertDialogTitle className="text-2xl font-black text-zinc-800 tracking-tight">Convert To Admission?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Register <span className="text-zinc-900">"{convertingEnquiry?.enquirerFirstName}"</span> as an official student. This action moves the lead to the admission registry.</AlertDialogDescription></div>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="mt-8 gap-3">
+                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black h-12 px-8">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConvertToAdmission} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-primary hover:bg-emerald-600 text-white transition-all active:scale-95">Confirm Register</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
+            <DialogContent className="max-w-md rounded-[32px] p-10 bg-white border-none shadow-2xl">
+              <div className="flex items-center justify-between mb-8"><DialogTitle className="text-xl font-black text-zinc-800">Manage {activeManageField?.label}</DialogTitle></div>
+              <div className="flex gap-2 mb-8"><Input value={newOptionValue} onChange={(e) => setNewOptionValue(e.target.value)} placeholder="Enter new..." className="rounded-xl h-12 font-bold" /><Button onClick={handleSaveOption} className="bg-primary text-white rounded-xl px-8 h-12 border-none shadow-lg active:scale-95 transition-all">Save</Button></div>
+              <ScrollArea className="h-64 pr-4"><div className="space-y-2">{(dropdownData[activeManageField?.key || ''] || []).map(opt => (
+                <div key={opt.id} className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 hover:bg-zinc-50 transition-all">
+                  <span className="text-sm font-black text-zinc-700">{opt.value}</span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingOptionId(opt.id); setNewOptionValue(opt.value); }} className="text-blue-500 h-8 w-8"><Edit2 className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => remove(ref(database!, `Institutes/${resolvedId}/dropdowns/${activeManageField!.key}/${opt.id}`))} className="text-rose-500 h-8 w-8"><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </div>
+              ))}</div></ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+function MultiCriteriaBox({ label, selected, onToggle, options }: { label: string, selected: string[], onToggle: (v: string) => void, options: any[] }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="w-full h-10 px-4 rounded-lg border border-zinc-200 bg-white flex items-center justify-between text-xs font-black text-zinc-600 shadow-inner group hover:border-primary transition-all">
+            <span className="truncate">{selected.length > 0 ? `${selected.length} Selected` : "Select Options"}</span>
+            <Filter className="w-3.5 h-3.5 text-zinc-300 group-hover:text-primary" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0 rounded-2xl overflow-hidden border-zinc-100 shadow-2xl">
+          <div className="bg-zinc-50 p-4 border-b border-zinc-100 flex justify-between items-center">
+            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Select Multiple</p>
+          </div>
+          <ScrollArea className="h-64">
+            <div className="p-2 space-y-1">
+              {options.map(opt => (
+                <div key={opt.id} onClick={() => onToggle(opt.value)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors group">
+                  <Checkbox checked={selected.includes(opt.value)} onCheckedChange={() => onToggle(opt.value)} className="data-[state=checked]:bg-primary" />
+                  <span className="text-xs font-black text-zinc-600 group-hover:text-zinc-900">{opt.value}</span>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
+function FormItem({ label, name, type = "text", required = false, defaultValue, maxLength, placeholder }: any) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[10px] font-black text-black tracking-widest ml-1">{label} {required && "*"}</Label>
+      <Input name={name} type={type} required={required} defaultValue={defaultValue} maxLength={maxLength} placeholder={placeholder || label} className="rounded-xl border-zinc-200 h-12 font-bold text-black text-sm focus-visible:ring-primary" />
+    </div>
+  )
+}
+
+function FormSelect({ label, name, options, onManage, defaultValue, required = false }: any) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center px-1">
+        <Label className="text-[10px] font-black text-black tracking-widest">{label} {required && "*"}</Label>
+        <button type="button" onClick={onManage} className="text-[9px] font-bold text-blue-600 hover:underline">Manage <Settings2 className="w-2.5 h-2.5 inline" /></button>
+      </div>
+      <Select name={name} defaultValue={defaultValue} required={required}>
+        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-primary transition-none"><SelectValue placeholder="Select" /></SelectTrigger>
+        <SelectContent className="rounded-xl border-zinc-100 shadow-xl">{options.map((opt: any) => (<SelectItem key={opt.id} value={opt.value} className="rounded-lg font-bold text-[10px]">{opt.value}</SelectItem>))}</SelectContent>
+      </Select>
+    </div>
+  )
+}
