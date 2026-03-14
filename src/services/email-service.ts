@@ -1,5 +1,6 @@
 'use server';
 
+
 /**
  * @fileOverview Brevo Email Service for Digital Class.
  * Handles automated SMTP transmissions for user lifecycle events.
