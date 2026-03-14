@@ -5,7 +5,7 @@
  * Handles automated SMTP transmissions for user lifecycle events.
  */
 
-const BREVO_API_KEY = "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";
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const SENDER_EMAIL = "sales@digitalclassworld.com";
 const SENDER_NAME = "Digital Class";
 
