@@ -44,7 +44,7 @@ const fadeIn = {
 }
 
 export default function GalleryPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+ const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2";
   const { database } = useFirebase()
 
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -134,15 +134,15 @@ export default function GalleryPage({ params }: { params: Promise<{ id: string }
             )}
           </Link>
 
-          <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
-            <Link href={`/sites/${id}`} className="hover:text-primary transition-colors">Home</Link>
-            <Link href={`/sites/${id}#about`} className="hover:text-primary transition-colors">About Us</Link>
-            <Link href={`/sites/${id}#courses`} className="hover:text-primary transition-colors">Courses</Link>
-            <Link href={`/sites/${id}/infrastructure`} className="hover:text-primary transition-colors">Facilities</Link>
-            <Link href="#" className="text-primary transition-colors">Gallery</Link>
-            <Link href={`/sites/${id}#blog`} className="hover:text-primary transition-colors">Blogs</Link>
-            <Link href={`/sites/${id}#contact`} className="hover:text-primary transition-colors">Contact</Link>
-          </nav>
+            <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
+                      <Link href="#home">Home</Link>
+                      <Link href="#about">About Us</Link>
+                      <Link href="#courses">Courses</Link>
+                      <Link href="/infrastructure">Facilities</Link>
+                      <Link href="/gallery">Gallery</Link>
+                      <Link href="#blog">Blogs</Link>
+                      <Link href="#contact">Contact</Link>
+                    </nav>
 
           <div className="flex items-center gap-4">
             <DropdownMenu>

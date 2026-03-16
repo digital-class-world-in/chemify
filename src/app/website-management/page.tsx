@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState, useEffect, useMemo, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
 import { Card } from "@/components/ui/card"
@@ -13,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { 
   Dialog, 
@@ -65,7 +63,7 @@ import {
   MessageSquare,
   Quote
 } from "lucide-react"
-import { useFirebase, useUser } from "@/firebase"
+import { useFirebase } from "@/firebase"
 import { ref, onValue, set } from "firebase/database"
 import { toast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -98,17 +96,11 @@ const ICON_OPTIONS = [
 ]
 
 export default function WebsiteManagementPage() {
-  return (
-    <Suspense fallback={<div className="p-20 text-center font-black text-zinc-300 uppercase animate-pulse">Initializing portal...</div>}>
-      <WebsiteManagementContent />
-    </Suspense>
-  )
-}
-
-function WebsiteManagementContent() {
   const { database } = useFirebase()
-  const { user } = useUser()
-  
+
+  // ─── FIXED INSTITUTE ID (this is what you wanted) ───────────────
+  const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2"
+
   const [activeTab, setActiveTab] = useState("homepage")
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -116,7 +108,7 @@ function WebsiteManagementContent() {
   const [isAddingTestimonial, setIsAddingTestimonial] = useState(false)
   const [newSlideUrl, setNewSlideUrl] = useState("")
   const [newGalleryUrl, setNewGalleryUrl] = useState("")
-  
+
   const [settings, setSettings] = useState<any>({
     selectedTheme: 'unicat',
     visibility: {
@@ -174,9 +166,10 @@ function WebsiteManagementContent() {
   })
 
   useEffect(() => {
-    if (!database || !user) return
-    const rootPath = `Institutes/${user.uid}/website_settings`
-    
+    if (!database) return
+
+    const rootPath = `Institutes/${id}/website_settings`
+
     onValue(ref(database, rootPath), (snapshot) => {
       const data = snapshot.val()
       if (data) {
@@ -195,7 +188,7 @@ function WebsiteManagementContent() {
       }
       setIsLoading(false)
     })
-  }, [database, user])
+  }, [database])
 
   const handleUpdateSetting = (section: string, field: string, value: any) => {
     setSettings((prev: any) => ({
@@ -269,7 +262,7 @@ function WebsiteManagementContent() {
   }
 
   const handleSave = async () => {
-    if (!database || !user) return
+    if (!database) return
     setIsSaving(true)
     try {
       const finalSettings = { ...settings }
@@ -277,7 +270,7 @@ function WebsiteManagementContent() {
         finalSettings.stats = DEFAULT_STATS
       }
       
-      await set(ref(database, `Institutes/${user.uid}/website_settings`), finalSettings)
+      await set(ref(database, `Institutes/${id}/website_settings`), finalSettings)
       toast({ title: "Site synchronized", description: "Changes published instantly." })
     } catch (e) {
       toast({ variant: "destructive", title: "Sync failed" })
@@ -288,6 +281,17 @@ function WebsiteManagementContent() {
 
   const displayedStats = settings.stats?.length > 0 ? settings.stats : DEFAULT_STATS
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Loading website settings...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-public-sans">
       <Sidebar />
@@ -297,22 +301,33 @@ function WebsiteManagementContent() {
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
             <div>
-              <h2 className="text-[26px] font-normal text-black font-public-sans tracking-tight leading-none">Homepage setup</h2>
-              <p className="text-sm text-zinc-400 font-medium mt-1">Configure your main hero section and impact counters</p>
+              <h2 className="text-[26px] font-normal text-black font-public-sans tracking-tight leading-none">Website Management</h2>
+              <p className="text-sm text-zinc-400 font-medium mt-1">Configure your institute's public website appearance</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" asChild className="h-11 px-6 rounded-xl font-bold text-xs gap-2 border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm text-black">
-                <Link href={`/sites/${user?.uid}`} target="_blank"><Eye className="h-4 w-4" /> Live preview</Link>
+              <Button 
+                variant="outline" 
+                asChild 
+                className="h-11 px-6 rounded-xl font-bold text-xs gap-2 border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm text-black"
+              >
+                <Link href={`/localhost`} target="_blank">
+                  <Eye className="h-4 w-4" /> Live Preview
+                </Link>
               </Button>
-              <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-bold text-sm gap-2 border-none shadow-lg active:scale-95">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="h-4 w-4" />} {isSaving ? "Publishing..." : "Publish changes"}
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving} 
+                className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-bold text-sm gap-2 border-none shadow-lg active:scale-95"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="h-4 w-4" />} 
+                {isSaving ? "Publishing..." : "Publish Changes"}
               </Button>
             </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab as any} className="w-full">
             <TabsList className="bg-white p-1.5 rounded-2xl h-14 shadow-sm border border-zinc-100 mb-8 inline-flex items-center overflow-x-auto w-full justify-start md:w-auto">
-              <TabsTrigger value="homepage" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Main slider</TabsTrigger>
+              <TabsTrigger value="homepage" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Main Slider</TabsTrigger>
               <TabsTrigger value="branding" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Branding & Layout</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Testimonials</TabsTrigger>
               <TabsTrigger value="gallery" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Gallery</TabsTrigger>
@@ -320,43 +335,63 @@ function WebsiteManagementContent() {
               <TabsTrigger value="visibility" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white font-bold transition-none">Modules</TabsTrigger>
             </TabsList>
 
+            {/* ─── HOMEPAGE TAB ──────────────────────────────────────── */}
             <TabsContent value="homepage" className="mt-0 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white overflow-hidden p-10 space-y-12">
+                {/* Hero Content */}
                 <div className="space-y-10">
                   <h4 className="text-xl font-normal text-black font-public-sans flex items-center gap-2">
-                    <PenTool className="w-5 h-5 text-primary" /> Hero content
+                    <PenTool className="w-5 h-5 text-primary" /> Hero Content
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Main heading</Label>
-                      <Input value={settings.hero.title} onChange={(e) => handleUpdateSetting('hero', 'title', e.target.value)} className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" />
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Main Heading</Label>
+                      <Input 
+                        value={settings.hero.title} 
+                        onChange={(e) => handleUpdateSetting('hero', 'title', e.target.value)} 
+                        className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" 
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero description</Label>
-                      <Textarea value={settings.hero.description} onChange={(e) => handleUpdateSetting('hero', 'description', e.target.value)} className="rounded-xl border-zinc-200 font-bold min-h-[120px] text-black text-[15px]" />
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero Description</Label>
+                      <Textarea 
+                        value={settings.hero.description} 
+                        onChange={(e) => handleUpdateSetting('hero', 'description', e.target.value)} 
+                        className="rounded-xl border-zinc-200 font-bold min-h-[120px] text-black text-[15px]" 
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Button text</Label>
-                      <Input value={settings.hero.buttonText} onChange={(e) => handleUpdateSetting('hero', 'buttonText', e.target.value)} className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" />
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Button Text</Label>
+                      <Input 
+                        value={settings.hero.buttonText} 
+                        onChange={(e) => handleUpdateSetting('hero', 'buttonText', e.target.value)} 
+                        className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" 
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Redirect link</Label>
-                      <Input value={settings.hero.buttonLink} onChange={(e) => handleUpdateSetting('hero', 'buttonLink', e.target.value)} placeholder="#courses" className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" />
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Button Redirect Link</Label>
+                      <Input 
+                        value={settings.hero.buttonLink} 
+                        onChange={(e) => handleUpdateSetting('hero', 'buttonLink', e.target.value)} 
+                        placeholder="#courses or /admission" 
+                        className="h-12 rounded-xl border-zinc-200 font-bold text-black text-[15px]" 
+                      />
                     </div>
                   </div>
                 </div>
 
+                {/* Slider Images */}
                 <div className="space-y-10 pt-10 border-t border-zinc-50">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-xl font-normal text-black font-public-sans flex items-center gap-2">
-                        <ImageIcon className="w-5 h-5 text-primary" /> Visual slider
+                        <ImageIcon className="w-5 h-5 text-primary" /> Visual Slider
                       </h4>
-                      <p className="text-xs text-zinc-400 font-medium mt-1">Add images by pasting a cloud link or URL.</p>
+                      <p className="text-xs text-zinc-400 font-medium mt-1">Add images by pasting direct cloud links or URLs.</p>
                     </div>
                     <div className="flex gap-3 items-end">
                       <div className="space-y-1.5">
-                        <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Image link</Label>
+                        <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Image URL</Label>
                         <div className="relative w-80 group">
                           <LinkIcon className="absolute left-3.5 top-3 h-4 w-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
                           <Input 
@@ -367,20 +402,34 @@ function WebsiteManagementContent() {
                           />
                         </div>
                       </div>
-                      <Button onClick={handleAddSlideByUrl} className="bg-primary text-white rounded-xl h-10 px-6 font-bold text-sm border-none shadow-lg active:scale-95"><PlusCircle className="h-4 w-4" /> Add link</Button>
+                      <Button 
+                        onClick={handleAddSlideByUrl} 
+                        className="bg-primary text-white rounded-xl h-10 px-6 font-bold text-sm border-none shadow-lg active:scale-95 transition-all"
+                      >
+                        <PlusCircle className="h-4 w-4 mr-2" /> Add Slide
+                      </Button>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {(settings.hero.slides || []).map((slide: any, idx: number) => (
                       <Card key={idx} className="relative group overflow-hidden rounded-[32px] border-none shadow-sm aspect-[4/5] bg-zinc-50">
-                        <img src={slide.imageUrl} alt="Slide" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        <img 
+                          src={slide.imageUrl} 
+                          alt="Slide" 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button onClick={() => { 
-                            const s = [...settings.hero.slides]; 
-                            s.splice(idx, 1); 
-                            handleUpdateSetting('hero', 'slides', s); 
-                          }} variant="destructive" size="icon" className="rounded-full shadow-xl">
+                          <Button 
+                            onClick={() => { 
+                              const s = [...settings.hero.slides]; 
+                              s.splice(idx, 1); 
+                              handleUpdateSetting('hero', 'slides', s); 
+                            }} 
+                            variant="destructive" 
+                            size="icon" 
+                            className="rounded-full shadow-xl"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -390,17 +439,14 @@ function WebsiteManagementContent() {
                 </div>
               </Card>
 
+              {/* Statistics Section */}
               <div className="flex items-center gap-3 pt-10 border-t border-zinc-100">
                 <TrendingUp className="w-6 h-6 text-black" />
-                <h3 className="text-2xl font-normal text-zinc-800 font-public-sans">Statistics & counters</h3>
+                <h3 className="text-2xl font-normal text-zinc-800 font-public-sans">Statistics & Counters</h3>
               </div>
 
               <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white overflow-hidden p-10 space-y-10">
-                <div className="flex items-center gap-3 border-b border-zinc-50 pb-6">
-                  <Type className="w-5 h-5 text-indigo-500" />
-                  <h4 className="text-xl font-normal text-black font-public-sans">Section Branding</h4>
-                </div>
-                
+                {/* Section Branding */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="space-y-2">
                     <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Section Heading Text</Label>
@@ -428,8 +474,13 @@ function WebsiteManagementContent() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Heading Font Family</Label>
-                    <Select value={settings.milestoneHeading?.fontFamily} onValueChange={(v) => handleUpdateSetting('milestoneHeading', 'fontFamily', v)}>
-                      <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold bg-zinc-50/50 shadow-inner text-[15px]"><SelectValue /></SelectTrigger>
+                    <Select 
+                      value={settings.milestoneHeading?.fontFamily} 
+                      onValueChange={(v) => handleUpdateSetting('milestoneHeading', 'fontFamily', v)}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold bg-zinc-50/50 shadow-inner text-[15px]">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         {FONT_FAMILIES.map(font => (
                           <SelectItem key={font.value} value={font.value} className="font-bold">{font.label}</SelectItem>
@@ -439,47 +490,50 @@ function WebsiteManagementContent() {
                   </div>
                 </div>
 
+                {/* Add / Remove Stats */}
                 <div className="flex items-center justify-between pt-10 border-t border-zinc-50">
                   <div>
                     <h4 className="text-xl font-normal text-black font-public-sans flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-primary" /> Active milestones
+                      <Trophy className="w-5 h-5 text-primary" /> Active Milestones
                     </h4>
-                    <p className="text-xs text-zinc-400 font-medium mt-1">Manage individual counters visible on the portal.</p>
+                    <p className="text-xs text-zinc-400 font-medium mt-1">Manage counters visible on homepage.</p>
                   </div>
                   <Dialog open={isAddingStat} onOpenChange={setIsAddingStat}>
                     <DialogTrigger asChild>
-                      <Button onClick={() => setIsAddingStat(true)} className="bg-zinc-900 text-white rounded-xl h-11 px-8 font-black text-xs gap-2 border-none shadow-sm active:scale-95 transition-all uppercase tracking-widest">
-                        <Plus className="h-4 w-4" /> Add counter
+                      <Button className="bg-zinc-900 text-white rounded-xl h-11 px-8 font-black text-xs gap-2 border-none shadow-sm active:scale-95 transition-all uppercase tracking-widest">
+                        <Plus className="h-4 w-4" /> Add Counter
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md p-0 border-none rounded-[32px] overflow-hidden bg-white shadow-2xl">
                       <div className="bg-zinc-900 p-8 text-white relative">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
-                        <DialogTitle className="text-xl font-normal font-public-sans">New milestone</DialogTitle>
+                        <DialogTitle className="text-xl font-normal font-public-sans">New Milestone Counter</DialogTitle>
                       </div>
                       <form onSubmit={handleAddStat} className="p-8 space-y-6">
                         <div className="space-y-1.5">
-                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Heading (Top)</Label>
-                          <Input name="label" placeholder="Well Trained Teacher" required className="h-12 rounded-xl border-zinc-200 font-bold text-[15px]" />
+                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Label (Top)</Label>
+                          <Input name="label" placeholder="Well Trained Teachers" required className="h-12 rounded-xl border-zinc-200 font-bold" />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                           <div className="space-y-1.5">
-                            <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Number Value</Label>
-                            <Input name="value" type="number" placeholder="5000" required className="h-12 rounded-xl border-zinc-200 font-bold text-[15px]" />
+                            <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Value</Label>
+                            <Input name="value" type="number" placeholder="5000" required className="h-12 rounded-xl border-zinc-200 font-bold" />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Suffix (Optional)</Label>
-                            <Input name="suffix" placeholder="+" className="h-12 rounded-xl border-zinc-200 font-bold text-[15px]" />
+                            <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Suffix</Label>
+                            <Input name="suffix" placeholder="+" className="h-12 rounded-xl border-zinc-200 font-bold" />
                           </div>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Sub-heading (Bottom)</Label>
-                          <Input name="subLabel" placeholder="PRE PRIMARY CLASS..." className="h-12 rounded-xl border-zinc-200 font-bold text-[15px]" />
+                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Sub Label</Label>
+                          <Input name="subLabel" placeholder="Experienced Faculty" className="h-12 rounded-xl border-zinc-200 font-bold" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Icon Selection</Label>
+                          <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Icon</Label>
                           <Select name="icon" defaultValue="Award">
-                            <SelectTrigger className="h-12 rounded-xl border-zinc-200"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-12 rounded-xl border-zinc-200">
+                              <SelectValue />
+                            </SelectTrigger>
                             <SelectContent>
                               {ICON_OPTIONS.map(opt => (
                                 <SelectItem key={opt.id} value={opt.id} className="font-bold">{opt.id}</SelectItem>
@@ -488,7 +542,7 @@ function WebsiteManagementContent() {
                           </Select>
                         </div>
                         <Button type="submit" className="w-full h-14 bg-primary text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl border-none mt-4">
-                          Confirm & add
+                          Add Milestone
                         </Button>
                       </form>
                     </DialogContent>
@@ -497,7 +551,10 @@ function WebsiteManagementContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {displayedStats.map((stat: any) => (
-                    <Card key={stat.id} className={cn("relative p-6 rounded-3xl border border-zinc-100 group transition-all hover:bg-white hover:shadow-xl", stat.color || "bg-zinc-50")}>
+                    <Card key={stat.id} className={cn(
+                      "relative p-6 rounded-3xl border border-zinc-100 group transition-all hover:bg-white hover:shadow-xl",
+                      stat.color || "bg-zinc-50"
+                    )}>
                       <button 
                         onClick={() => handleRemoveStat(stat.id)}
                         className="absolute top-4 right-4 text-zinc-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all border-none bg-transparent cursor-pointer"
@@ -506,8 +563,12 @@ function WebsiteManagementContent() {
                       </button>
                       <div className="space-y-4 text-center">
                         <p className="text-sm font-bold text-zinc-800 uppercase tracking-tight">{stat.label}</p>
-                        <h5 className="text-3xl font-black text-primary tracking-tighter leading-none">{stat.value}{stat.suffix}</h5>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight">{stat.subLabel}</p>
+                        <h5 className="text-3xl font-black text-primary tracking-tighter leading-none">
+                          {stat.value}{stat.suffix}
+                        </h5>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight">
+                          {stat.subLabel}
+                        </p>
                       </div>
                     </Card>
                   ))}
@@ -515,44 +576,50 @@ function WebsiteManagementContent() {
               </Card>
             </TabsContent>
 
+            {/* ─── TESTIMONIALS TAB ──────────────────────────────────── */}
             <TabsContent value="testimonials" className="mt-0 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
                 <div>
                   <h3 className="text-xl font-normal text-black font-public-sans flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-primary" /> Testimonials & reviews
+                    <MessageSquare className="w-5 h-5 text-primary" /> Testimonials & Reviews
                   </h3>
-                  <p className="text-xs text-zinc-400 font-medium mt-1">Add student or parent feedback for the animated home section.</p>
+                  <p className="text-xs text-zinc-400 font-medium mt-1">Student & parent feedback shown in carousel.</p>
                 </div>
                 <Dialog open={isAddingTestimonial} onOpenChange={setIsAddingTestimonial}>
                   <DialogTrigger asChild>
                     <Button className="bg-primary text-white rounded-xl h-11 px-8 font-black text-xs gap-2 border-none shadow-sm active:scale-95 transition-all uppercase tracking-widest">
-                      <Plus className="h-4 w-4" /> Add feedback
+                      <Plus className="h-4 w-4" /> Add Testimonial
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md p-0 border-none rounded-[32px] overflow-hidden bg-white shadow-2xl">
                     <div className="bg-[#1e3a8a] p-8 text-white relative">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
-                      <DialogTitle className="text-xl font-normal font-public-sans">New feedback entry</DialogTitle>
+                      <DialogTitle className="text-xl font-normal font-public-sans">Add New Testimonial</DialogTitle>
                     </div>
                     <form onSubmit={handleAddTestimonial} className="p-8 space-y-6">
                       <div className="space-y-1.5">
-                        <Label className="text-[13px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Full Name</Label>
+                        <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Student / Parent Name</Label>
                         <Input name="name" placeholder="Pooja Devjani" required className="h-12 rounded-xl border-zinc-200 font-bold" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[13px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Designation / Role</Label>
-                        <Input name="role" placeholder="Student @ Naroda Branch" required className="h-12 rounded-xl border-zinc-200 font-bold" />
+                        <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Designation / Relation</Label>
+                        <Input name="role" placeholder="Parent of Class 10 student" required className="h-12 rounded-xl border-zinc-200 font-bold" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[13px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Avatar Image URL</Label>
+                        <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Avatar Image URL (optional)</Label>
                         <Input name="image" placeholder="https://..." className="h-12 rounded-xl border-zinc-200 font-bold" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[13px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Review Message</Label>
-                        <Textarea name="message" required placeholder="Write the student experience here..." className="rounded-xl border-zinc-200 min-h-[120px] font-medium" />
+                        <Label className="text-[15px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Review Message</Label>
+                        <Textarea 
+                          name="message" 
+                          required 
+                          placeholder="My child loves the teaching style and personal attention..." 
+                          className="rounded-xl border-zinc-200 min-h-[140px] font-medium" 
+                        />
                       </div>
                       <Button type="submit" className="w-full h-14 bg-primary text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl border-none mt-4">
-                        Confirm & publish
+                        Publish Testimonial
                       </Button>
                     </form>
                   </DialogContent>
@@ -583,23 +650,29 @@ function WebsiteManagementContent() {
                 {(settings.testimonials || []).length === 0 && (
                   <div className="col-span-full py-20 text-center space-y-4 bg-zinc-50/50 rounded-[40px] border-2 border-dashed border-zinc-100">
                     <MessageSquare className="w-10 h-10 text-zinc-200 mx-auto" />
-                    <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">No feedback registered yet</p>
+                    <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">No testimonials added yet</p>
                   </div>
                 )}
               </div>
             </TabsContent>
 
+            {/* ─── BRANDING TAB ──────────────────────────────────────── */}
             <TabsContent value="branding" className="mt-0 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white p-10 space-y-10">
                   <h4 className="text-lg font-normal text-black font-public-sans flex items-center gap-2 border-b border-zinc-50 pb-2">
-                    <Type className="w-5 h-5 text-primary" /> Typography logic
+                    <Type className="w-5 h-5 text-primary" /> Typography Settings
                   </h4>
                   <div className="space-y-8">
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Global font family</Label>
-                      <Select value={settings.styling.fontFamily} onValueChange={(v) => handleUpdateSetting('styling', 'fontFamily', v)}>
-                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]"><SelectValue /></SelectTrigger>
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Global Font Family</Label>
+                      <Select 
+                        value={settings.styling.fontFamily} 
+                        onValueChange={(v) => handleUpdateSetting('styling', 'fontFamily', v)}
+                      >
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {FONT_FAMILIES.map(font => (
                             <SelectItem key={font.value} value={font.value} className="font-bold">{font.label}</SelectItem>
@@ -609,9 +682,14 @@ function WebsiteManagementContent() {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero title font</Label>
-                      <Select value={settings.styling.heroTitleFontFamily || settings.styling.fontFamily} onValueChange={(v) => handleUpdateSetting('styling', 'heroTitleFontFamily', v)}>
-                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]"><SelectValue /></SelectTrigger>
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero Title Font</Label>
+                      <Select 
+                        value={settings.styling.heroTitleFontFamily || settings.styling.fontFamily} 
+                        onValueChange={(v) => handleUpdateSetting('styling', 'heroTitleFontFamily', v)}
+                      >
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {FONT_FAMILIES.map(font => (
                             <SelectItem key={font.value} value={font.value} className="font-bold">{font.label}</SelectItem>
@@ -621,9 +699,14 @@ function WebsiteManagementContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero description font</Label>
-                      <Select value={settings.styling.heroDescFontFamily || settings.styling.fontFamily} onValueChange={(v) => handleUpdateSetting('styling', 'heroDescFontFamily', v)}>
-                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]"><SelectValue /></SelectTrigger>
+                      <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">Hero Description Font</Label>
+                      <Select 
+                        value={settings.styling.heroDescFontFamily || settings.styling.fontFamily} 
+                        onValueChange={(v) => handleUpdateSetting('styling', 'heroDescFontFamily', v)}
+                      >
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-black bg-zinc-50/50 shadow-inner text-[15px]">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {FONT_FAMILIES.map(font => (
                             <SelectItem key={font.value} value={font.value} className="font-bold">{font.label}</SelectItem>
@@ -635,7 +718,7 @@ function WebsiteManagementContent() {
                     <div className="space-y-6">
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Headline size</Label>
+                          <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Headline Size</Label>
                           <span className="text-[15px] font-bold text-primary">{settings.styling.titleFontSize}px</span>
                         </div>
                         <Slider 
@@ -650,12 +733,12 @@ function WebsiteManagementContent() {
 
                 <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white p-10 space-y-10">
                   <h4 className="text-lg font-normal text-black font-public-sans flex items-center gap-2 border-b border-zinc-50 pb-2">
-                    <Shapes className="w-5 h-5 text-primary" /> Visual layout
+                    <Shapes className="w-5 h-5 text-primary" /> Layout & Spacing
                   </h4>
                   <div className="space-y-8">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Hero section height</Label>
+                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Hero Height</Label>
                         <span className="text-[15px] font-bold text-primary">{settings.styling.heroImageHeight}px</span>
                       </div>
                       <Slider 
@@ -667,7 +750,7 @@ function WebsiteManagementContent() {
 
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Scroller height</Label>
+                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Slider Height</Label>
                         <span className="text-[15px] font-bold text-primary">{settings.styling.sliderHeight}px</span>
                       </div>
                       <Slider 
@@ -679,7 +762,7 @@ function WebsiteManagementContent() {
 
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Scroller width (%)</Label>
+                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Slider Width (%)</Label>
                         <span className="text-[15px] font-bold text-primary">{settings.styling.sliderWidth}%</span>
                       </div>
                       <Slider 
@@ -691,7 +774,7 @@ function WebsiteManagementContent() {
 
                     <div className="pt-4 space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Section spacing</Label>
+                        <Label className="text-[15px] font-bold uppercase text-black tracking-widest">Section Spacing</Label>
                         <span className="text-[15px] font-bold text-primary">{settings.styling.sectionSpacing}px</span>
                       </div>
                       <Slider 
@@ -705,18 +788,19 @@ function WebsiteManagementContent() {
               </div>
             </TabsContent>
 
+            {/* ─── GALLERY TAB ───────────────────────────────────────── */}
             <TabsContent value="gallery" className="mt-0 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white overflow-hidden p-10 space-y-10">
                 <div className="flex items-center justify-between border-b border-zinc-50 pb-6">
                   <div>
                     <h4 className="text-xl font-normal text-black font-public-sans flex items-center gap-2">
-                      <ImageIcon className="w-5 h-5 text-primary" /> Photo gallery
+                      <ImageIcon className="w-5 h-5 text-primary" /> Photo Gallery
                     </h4>
-                    <p className="text-xs text-zinc-400 font-medium mt-1">Add institutional photos via link.</p>
+                    <p className="text-xs text-zinc-400 font-medium mt-1">Add campus, event & activity photos via direct links.</p>
                   </div>
                   <div className="flex gap-3 items-end">
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Image link</Label>
+                      <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Image URL</Label>
                       <div className="relative w-80 group">
                         <LinkIcon className="absolute left-3.5 top-3 h-4 w-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
                         <Input 
@@ -727,20 +811,34 @@ function WebsiteManagementContent() {
                         />
                       </div>
                     </div>
-                    <Button onClick={handleAddGalleryImage} className="bg-primary text-white rounded-xl h-10 px-6 font-bold text-sm border-none shadow-lg active:scale-95 transition-all">Add Photo</Button>
+                    <Button 
+                      onClick={handleAddGalleryImage} 
+                      className="bg-primary text-white rounded-xl h-10 px-6 font-bold text-sm border-none shadow-lg active:scale-95 transition-all"
+                    >
+                      Add Photo
+                    </Button>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {(settings.gallery || []).map((img: any, idx: number) => (
                     <Card key={idx} className="relative group overflow-hidden rounded-2xl border-none shadow-sm aspect-square bg-zinc-50">
-                      <img src={img.url} alt="Gallery" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <img 
+                        src={img.url} 
+                        alt="Gallery" 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                      />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button onClick={() => { 
-                          const g = [...settings.gallery]; 
-                          g.splice(idx, 1); 
-                          setSettings({...settings, gallery: g}); 
-                        }} variant="destructive" size="icon" className="rounded-full shadow-xl">
+                        <Button 
+                          onClick={() => { 
+                            const g = [...settings.gallery]; 
+                            g.splice(idx, 1); 
+                            setSettings({...settings, gallery: g}); 
+                          }} 
+                          variant="destructive" 
+                          size="icon" 
+                          className="rounded-full shadow-xl"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -749,45 +847,88 @@ function WebsiteManagementContent() {
                   {(settings.gallery || []).length === 0 && (
                     <div className="col-span-full py-20 text-center space-y-4 bg-zinc-50/50 rounded-3xl border-2 border-dashed border-zinc-100">
                       <ImageIcon className="w-10 h-10 text-zinc-200 mx-auto" />
-                      <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Gallery is empty</p>
+                      <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">No photos in gallery yet</p>
                     </div>
                   )}
                 </div>
               </Card>
             </TabsContent>
 
+            {/* ─── SOCIAL LINKS TAB ──────────────────────────────────── */}
             <TabsContent value="social" className="mt-0 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Card className="border border-zinc-100 shadow-sm rounded-[32px] bg-white overflow-hidden p-10 space-y-10">
                 <div className="flex items-center gap-3 border-b border-zinc-50 pb-6">
                   <Share2 className="w-5 h-5 text-rose-500" />
-                  <h4 className="text-xl font-normal text-black font-public-sans">Social media ecosystem</h4>
+                  <h4 className="text-xl font-normal text-black font-public-sans">Social Media Links</h4>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                  <SocialInput label="Facebook URL" icon={<Facebook className="text-[#1877F2]" />} value={settings.social?.facebook} onChange={(v) => handleUpdateSetting('social', 'facebook', v)} />
-                  <SocialInput label="Instagram URL" icon={<Instagram className="text-[#E4405F]" />} value={settings.social?.instagram} onChange={(v) => handleUpdateSetting('social', 'instagram', v)} />
-                  <SocialInput label="X (Twitter) URL" icon={<Twitter className="text-[#1DA1F2]" />} value={settings.social?.twitter} onChange={(v) => handleUpdateSetting('social', 'twitter', v)} />
-                  <SocialInput label="YouTube Channel" icon={<Youtube className="text-[#FF0000]" />} value={settings.social?.youtube} onChange={(v) => handleUpdateSetting('social', 'youtube', v)} />
-                  <SocialInput label="LinkedIn Page" icon={<Linkedin className="text-[#0A66C2]" />} value={settings.social?.linkedin} onChange={(v) => handleUpdateSetting('social', 'linkedin', v)} />
-                  <SocialInput label="Official Email" icon={<Mail className="text-zinc-500" />} value={settings.social?.email} onChange={(v) => handleUpdateSetting('social', 'email', v)} />
+                  <SocialInput 
+                    label="Facebook URL" 
+                    icon={<Facebook className="text-[#1877F2]" />} 
+                    value={settings.social?.facebook} 
+                    onChange={(v) => handleUpdateSetting('social', 'facebook', v)} 
+                  />
+                  <SocialInput 
+                    label="Instagram URL" 
+                    icon={<Instagram className="text-[#E4405F]" />} 
+                    value={settings.social?.instagram} 
+                    onChange={(v) => handleUpdateSetting('social', 'instagram', v)} 
+                  />
+                  <SocialInput 
+                    label="X (Twitter) URL" 
+                    icon={<Twitter className="text-[#1DA1F2]" />} 
+                    value={settings.social?.twitter} 
+                    onChange={(v) => handleUpdateSetting('social', 'twitter', v)} 
+                  />
+                  <SocialInput 
+                    label="YouTube Channel" 
+                    icon={<Youtube className="text-[#FF0000]" />} 
+                    value={settings.social?.youtube} 
+                    onChange={(v) => handleUpdateSetting('social', 'youtube', v)} 
+                  />
+                  <SocialInput 
+                    label="LinkedIn Page" 
+                    icon={<Linkedin className="text-[#0A66C2]" />} 
+                    value={settings.social?.linkedin} 
+                    onChange={(v) => handleUpdateSetting('social', 'linkedin', v)} 
+                  />
+                  <SocialInput 
+                    label="Official Email" 
+                    icon={<Mail className="text-zinc-500" />} 
+                    value={settings.social?.email} 
+                    onChange={(v) => handleUpdateSetting('social', 'email', v)} 
+                  />
                 </div>
 
                 <div className="bg-zinc-50 p-6 rounded-3xl border border-zinc-100 flex items-start gap-4">
                   <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                  <p className="text-[13px] font-bold text-zinc-500 leading-relaxed">Links provided here will be active in the website footer, blog detail sharing, and the contact section. Icons for missing links will be automatically hidden.</p>
+                  <p className="text-[13px] font-bold text-zinc-500 leading-relaxed">
+                    These links appear in footer, blog sharing buttons, and contact section. Empty links are hidden automatically.
+                  </p>
                 </div>
               </Card>
             </TabsContent>
 
+            {/* ─── VISIBILITY / MODULES TAB ───────────────────────────── */}
             <TabsContent value="visibility" className="mt-0">
               <Card className="border-none shadow-sm rounded-[40px] bg-white p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {Object.keys(settings.visibility || {}).map((key) => (
-                  <div key={key} className="flex items-center justify-between p-8 bg-zinc-50/50 rounded-3xl border border-zinc-100 group hover:border-primary/20 transition-all">
-                    <Label className="text-[15px] font-bold uppercase text-black tracking-widest">{key.replace('_', ' ')}</Label>
-                    <Switch checked={settings.visibility[key]} onCheckedChange={(v) => {
-                      const newVis = { ...settings.visibility, [key]: v };
-                      setSettings({ ...settings, visibility: newVis });
-                    }} className="data-[state=checked]:bg-primary" />
+                  <div 
+                    key={key} 
+                    className="flex items-center justify-between p-8 bg-zinc-50/50 rounded-3xl border border-zinc-100 group hover:border-primary/20 transition-all"
+                  >
+                    <Label className="text-[15px] font-bold uppercase text-black tracking-widest">
+                      {key.replace('_', ' ')}
+                    </Label>
+                    <Switch 
+                      checked={settings.visibility[key]} 
+                      onCheckedChange={(v) => {
+                        const newVis = { ...settings.visibility, [key]: v };
+                        setSettings({ ...settings, visibility: newVis });
+                      }} 
+                      className="data-[state=checked]:bg-primary" 
+                    />
                   </div>
                 ))}
               </Card>
@@ -804,7 +945,7 @@ function SocialInput({ label, icon, value, onChange }: { label: string, icon: an
     <div className="space-y-2">
       <Label className="text-[15px] font-bold uppercase text-black tracking-widest ml-1">{label}</Label>
       <div className="relative group">
-        <div className="absolute left-4 top-3.5 group-focus-within:scale-110 transition-transform">{icon}</div>
+        <div className="absolute left-4 top-3.5 group-focus-witahin:scale-110 transition-transform">{icon}</div>
         <Input 
           value={value || ""} 
           onChange={(e) => onChange(e.target.value)} 

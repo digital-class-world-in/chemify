@@ -101,7 +101,7 @@ export default function LoginPage() {
         title: "Success",
         description: "Redirecting to dashboard...",
       })
-      router.push("/")
+      router.push("/dashboard")
     } catch (error: any) {
       toast({
         variant: "destructive",

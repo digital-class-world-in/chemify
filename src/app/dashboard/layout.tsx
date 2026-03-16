@@ -1,6 +1,11 @@
 import type {Metadata} from 'next';
-import './globals.css';
+import '../globals.css';
 import { FirebaseClientProvider } from '@/firebase';
+import { Toaster } from "@/components/ui/toaster";
+import { AuthCheck } from "@/components/auth/auth-check";
+import { ThemeManager } from "@/components/theme-manager";
+import { SubscriptionGuard } from "@/components/subscription-guard";
+import { DynamicBranding } from "@/components/dynamic-branding";
 
 export const metadata: Metadata = {
   title: 'Institute Management System',
@@ -21,7 +26,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased selection:bg-primary/30">
         <FirebaseClientProvider>
-          {children}
+          <DynamicBranding />
+          <ThemeManager />
+          <AuthCheck>
+            <SubscriptionGuard>
+              {children}
+            </SubscriptionGuard>
+          </AuthCheck>
+          <Toaster />
         </FirebaseClientProvider>
       </body>
     </html>
