@@ -310,7 +310,7 @@ export default function WebsiteManagementPage() {
                 asChild 
                 className="h-11 px-6 rounded-xl font-bold text-xs gap-2 border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm text-black"
               >
-                <Link href={`/localhost`} target="_blank">
+                <Link href={`/sites/${id}`} target="_blank">
                   <Eye className="h-4 w-4" /> Live Preview
                 </Link>
               </Button>

@@ -278,9 +278,15 @@ export function Sidebar() {
     <div className="hidden lg:flex lg:flex-col lg:w-[300px] lg:fixed lg:inset-y-0 bg-white z-50 font-public-sans border-r border-zinc-100 shadow-sm">
       <div className="h-20 flex items-center justify-center px-8 border-b border-zinc-50">
         {profile?.logoUrl ? (
-          <div className="relative w-full h-12">
-            <Image src={profile.logoUrl} alt="Logo" fill className="object-contain" priority />
-          </div>
+         <div className="relative w-full h-28">
+  <Image 
+    src={profile.logoUrl} 
+    alt="Logo" 
+    fill 
+    className="object-contain" 
+    priority 
+  />
+</div>
         ) : (
           <div className="flex items-center gap-3 overflow-hidden w-full">
             <div className="w-10 h-10 min-w-[40px] bg-zinc-50 rounded-xl flex items-center justify-center text-primary shadow-inner font-bold text-lg">

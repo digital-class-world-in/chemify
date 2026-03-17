@@ -111,8 +111,8 @@ export function TopNav() {
 
   const handleOpenWebsite = () => {
     if (user?.uid) {
-      const target = profile?.slug || user.uid
-      window.open(`/sites/${target}`, '_blank')
+       const id = "JzZYbd6RobXVEn42uupTklHW1sn1"
+       window.open(`/`, '_blank')
     }
   }
 

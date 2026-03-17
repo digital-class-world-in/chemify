@@ -110,7 +110,7 @@ const ICON_MAP: Record<string, any> = {
 }
 
 export default function InfrastructurePage({ params }: { params: Promise<{ id: string }> }) {
-  const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2";
+   const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
   const { database } = useFirebase()
   
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -237,7 +237,11 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+               <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
@@ -294,7 +298,7 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
           <motion.div {...fadeIn} className="max-w-3xl space-y-8">
             <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">
-              <Link href={`/sites/${id}`} className="hover:text-primary">Home</Link>
+              <Link href={`/#home`} className="hover:text-primary">Home</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-zinc-900">Infrastructure</span>
             </nav>

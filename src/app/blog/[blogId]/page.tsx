@@ -39,7 +39,7 @@ const fadeIn = {
 }
 
 export default function BlogDetailPage({ params }: { params: Promise<{ id: string, blogId: string }> }) {
-  const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2";
+  const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
   const {  blogId } = use(params)
   const { database } = useFirebase()
 
@@ -154,7 +154,11 @@ export default function BlogDetailPage({ params }: { params: Promise<{ id: strin
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+               <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">

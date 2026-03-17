@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react"
 import Image from "next/image"
 
-const DEFAULT_LOGO = "https://ik.imagekit.io/glc8gb4if/download.png"
+const DEFAULT_LOGO = "https://ik.imagekit.io/glc8gb4if/WhatsApp_Image_2026-03-12_at_15.29.20-removebg-preview.png"
+
 
 export default function StaffLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -118,8 +119,14 @@ export default function StaffLoginPage() {
         <div className="h-2 w-full bg-[#0D9488]" />
         <CardHeader className="space-y-4 pt-12 px-8 text-center">
           <div className="flex justify-center">
-            <div className="w-32 h-20 relative flex items-center justify-center transition-none">
-              <Image src={dynamicLogo} alt="Logo" fill className="object-contain" />
+           <div className="relative w-48 h-20 max-w-[280px] mx-auto items-center justify-center transition-all duration-300 hover:scale-105">
+              <Image 
+                src={dynamicLogo} 
+                alt="Institute Logo" 
+                fill 
+                className="object-contain drop-shadow-md"
+                priority
+              />
             </div>
           </div>
           <div className="space-y-1">

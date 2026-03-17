@@ -18,7 +18,7 @@ const PUBLIC_PATHS = [
 ]
 
 // ← Change this to your real fallback institute slug
-const FALLBACK_INSTITUTE_SLUG = "nirvana-education-commune-n2iv"
+const FALLBACK_INSTITUTE_SLUG = "chemify-classes-to17"
 
 export function AuthCheck({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading, auth } = useUser()
@@ -88,7 +88,7 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
       router.push(`/`)
 
       // Option B: (if you want to keep current behavior but fixed)
-      // router.push("/sites/nirvana-education-commune-n2iv")
+      // router.push("/sites/chemify-classes-to17")
     }
 
     // 6. Access Control for Deleted Nodes / Institutes

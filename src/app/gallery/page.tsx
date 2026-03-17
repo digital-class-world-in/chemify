@@ -44,7 +44,7 @@ const fadeIn = {
 }
 
 export default function GalleryPage({ params }: { params: Promise<{ id: string }> }) {
- const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2";
+    const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
   const { database } = useFirebase()
 
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -121,7 +121,11 @@ export default function GalleryPage({ params }: { params: Promise<{ id: string }
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+               <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
@@ -135,13 +139,13 @@ export default function GalleryPage({ params }: { params: Promise<{ id: string }
           </Link>
 
             <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
-                      <Link href="#home">Home</Link>
-                      <Link href="#about">About Us</Link>
-                      <Link href="#courses">Courses</Link>
+                      <Link href="/#home">Home</Link>
+                      <Link href="/#about">About Us</Link>
+                      <Link href="/#courses">Courses</Link>
                       <Link href="/infrastructure">Facilities</Link>
                       <Link href="/gallery">Gallery</Link>
-                      <Link href="#blog">Blogs</Link>
-                      <Link href="#contact">Contact</Link>
+                      <Link href="/#blog">Blogs</Link>
+                      <Link href="/#contact">Contact</Link>
                     </nav>
 
           <div className="flex items-center gap-4">
@@ -288,9 +292,9 @@ export default function GalleryPage({ params }: { params: Promise<{ id: string }
           <div>
             <h4 className="text-sm font-black uppercase tracking-widest mb-10 text-white">Quick Access</h4>
             <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase tracking-tight">
-              <li><Link href={`/sites/${id}`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Home</Link></li>
-              <li><Link href={`/sites/${id}#about`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> About Us</Link></li>
-              <li><Link href={`/sites/${id}/infrastructure`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Facilities</Link></li>
+              <li><Link href={`/#home`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Home</Link></li>
+              <li><Link href={`/#about`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> About Us</Link></li>
+              <li><Link href={`/infrastructure`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Facilities</Link></li>
               <li><Link href="#" className="text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Gallery</Link></li>
             </ul>
           </div>

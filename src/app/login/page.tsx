@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -15,7 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Mail, Lock, Loader2, User, Users, Building2, Eye, EyeOff } from "lucide-react"
 import Image from "next/image"
 
-const DEFAULT_LOGO = "https://ik.imagekit.io/rgazxzsxr/image_60fabb28-8462-4e23-9c68-1683a88bad1f.png?updatedAt=1767788967683"
+const DEFAULT_LOGO = "https://ik.imagekit.io/glc8gb4if/WhatsApp_Image_2026-03-12_at_15.29.20-removebg-preview.png"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -116,10 +115,16 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4 font-public-sans overflow-hidden">
       <Card className="w-full max-w-md border-none shadow-xl rounded-[40px] bg-white overflow-hidden">
         <div className="h-2 w-full bg-[#0D9488]" />
-        <CardHeader className="space-y-2 pt-8 px-10 text-center">
+        <CardHeader className="space-y-4 pt-10 px-10 pb-6 text-center">
           <div className="flex justify-center">
-            <div className="w-32 h-20 relative flex items-center justify-center transition-all hover:scale-105">
-              <Image src={dynamicLogo} alt="Logo" fill className="object-contain" />
+            <div className="relative w-48 h-20 max-w-[280px] mx-auto items-center justify-center transition-all duration-300 hover:scale-105">
+              <Image 
+                src={dynamicLogo} 
+                alt="Institute Logo" 
+                fill 
+                className="object-contain drop-shadow-md"
+                priority
+              />
             </div>
           </div>
           <div className="space-y-1">
@@ -129,6 +134,7 @@ export default function LoginPage() {
             </CardDescription>
           </div>
         </CardHeader>
+
         <CardContent className="px-10 pb-6">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
@@ -144,6 +150,7 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+
             <div className="space-y-1.5">
               <div className="flex items-center justify-between ml-1">
                 <Label className="text-[11px] font-bold text-black uppercase tracking-widest">Password</Label>
@@ -169,23 +176,24 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-[#0D9488] hover:bg-[#0D9488] text-white rounded-xl h-11 font-bold text-sm shadow-lg shadow-emerald-100 border-none transition-none mt-2 uppercase tracking-widest"
+              className="w-full bg-[#0D9488] hover:bg-[#0D9488]/90 text-white rounded-xl h-11 font-bold text-sm shadow-lg shadow-emerald-100 border-none transition-none mt-2 uppercase tracking-widest"
             >
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Login"}
             </Button>
           </form>
           
-          <div className="space-y-3 pt-4 mt-4 border-t border-zinc-200/70">
+          <div className="space-y-3 pt-6 mt-4 border-t border-zinc-200/70">
             <p className="text-center text-[9px] font-bold text-zinc-400 uppercase tracking-[0.25em]">PORTAL ACCESS</p>
             <div className="flex items-center justify-center gap-2 px-2">
               <Button
                 asChild
                 variant="default"
                 size="sm"
-                className="flex-1 h-9 text-[10px] font-black uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-97 rounded-lg"
+                className="flex-1 h-9 text-[10px] font-black uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-95 rounded-lg"
               >
                 <Link href="/student/login" className="flex items-center justify-center gap-1.5">
                   <User className="h-3.5 w-3.5" />
@@ -197,7 +205,7 @@ export default function LoginPage() {
                 asChild
                 variant="default"
                 size="sm"
-                className="flex-1 h-9 text-[10px] font-black uppercase bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all active:scale-97 rounded-lg"
+                className="flex-1 h-9 text-[10px] font-black uppercase bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all active:scale-95 rounded-lg"
               >
                 <Link href="/staff/login" className="flex items-center justify-center gap-1.5">
                   <Users className="h-3.5 w-3.5" />
@@ -205,28 +213,20 @@ export default function LoginPage() {
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                variant="default"
-                size="sm"
-                className="flex-1 h-9 text-[10px] font-black uppercase bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all active:scale-97 rounded-lg"
-              >
-                <Link href="/branch/login" className="flex items-center justify-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5" />
-                  Branch
-                </Link>
-              </Button>
+              
+                
             </div>
           </div>
         </CardContent>
-        <CardFooter className="bg-zinc-50/50 border-t border-zinc-50 px-10 py-4 text-center justify-center">
+
+        {/* <CardFooter className="bg-zinc-50/50 border-t border-zinc-50 px-10 py-4 text-center justify-center">
           <p className="text-xs text-black/60 font-medium">
             Don't have an account?{" "}
             <Link href="/signup" className="text-[#0D9488] font-bold hover:underline transition-none">
               Create Account
             </Link>
           </p>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   )

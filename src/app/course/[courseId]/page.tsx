@@ -89,7 +89,8 @@ const DEFAULT_OUTCOMES = [
 ]
 
 export default function CourseDetailPage({ params }: { params: Promise<{ id: string, courseId: string }> }) {
-  const { id, courseId } = use(params)
+  const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
+  const {  courseId } = use(params)
   const { database } = useFirebase()
   
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -241,7 +242,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+               <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
@@ -255,13 +260,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
           </Link>
 
           <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
-            <Link href={`/sites/${id}`} className="hover:text-primary transition-colors">Home</Link>
-            <Link href={`/sites/${id}#about`} className="hover:text-primary transition-colors">About Us</Link>
-            <Link href={`/sites/${id}#courses`} className="hover:text-primary transition-colors">Courses</Link>
-            <Link href={`/sites/${id}/infrastructure`} className="hover:text-primary transition-colors">Facilities</Link>
-            <Link href={`/sites/${id}/gallery`} className="hover:text-primary transition-colors">Gallery</Link>
-            <Link href={`/sites/${id}#blog`} className="hover:text-primary transition-colors">Blogs</Link>
-            <Link href={`/sites/${id}#contact`} className="hover:text-primary transition-colors">Contact</Link>
+            <Link href={`/#`} className="hover:text-primary transition-colors">Home</Link>
+            <Link href={`#about`} className="hover:text-primary transition-colors">About Us</Link>
+            <Link href={`/#courses`} className="hover:text-primary transition-colors">Courses</Link>
+            <Link href={`/infrastructure`} className="hover:text-primary transition-colors">Facilities</Link>
+            <Link href={`/gallery`} className="hover:text-primary transition-colors">Gallery</Link>
+            <Link href={`/#blog`} className="hover:text-primary transition-colors">Blogs</Link>
+            <Link href={`/#contact`} className="hover:text-primary transition-colors">Contact</Link>
           </nav>
 
           <div className="flex items-center gap-4">

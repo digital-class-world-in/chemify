@@ -129,7 +129,7 @@ const STAT_ICONS: Record<string, any> = {
 }
 
 export default function InstitutePublicWebsite() {
-  const slug = "nirvana-education-commune-n2iv";
+  const slug = "chemify-classes-to17";
   const { database } = useFirebase()
 
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -294,14 +294,18 @@ export default function InstitutePublicWebsite() {
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+          <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <h1 className="text-xl font-black uppercase tracking-tighter text-zinc-900 hidden sm:block">
-                  {profile?.instituteName || "Nirvana Education"}
+                  {profile?.instituteName || "chemifyclasses.com/"}
                 </h1>
               </>
             )}
@@ -565,27 +569,64 @@ export default function InstitutePublicWebsite() {
       )}
 
       {/* ─── TESTIMONIALS (marquee) ──────────────────────────────── */}
-      {settings.visibility?.testimonials !== false && settings.testimonials?.length > 0 && (
-        <section className="py-20 bg-white overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 text-center mb-12">
-            <h2 className="text-4xl lg:text-5xl font-black text-zinc-900">What Our Students Say</h2>
-          </div>
+      {settings.visibility?.testimonials !== false && (settings.testimonials?.length ?? 0) > 0 && (
+  <section className="py-20 bg-white overflow-hidden">
+    <div className="max-w-7xl mx-auto px-6 text-center mb-12">
+      <h2 className="text-4xl lg:text-5xl font-black text-zinc-900">
+        What Our Students & Parents Say
+      </h2>
+      <p className="mt-4 text-lg text-zinc-600 max-w-2xl mx-auto">
+        Hear directly from the families who trust us with their education journey.
+      </p>
+    </div>
 
-          <div className="relative">
-            <div className="flex overflow-x-hidden">
-              <motion.div
-                animate={{ x: [0, -1920] }}
-                transition={{ ease: "linear", duration: 40, repeat: Infinity }}
-                className="flex gap-8 whitespace-nowrap"
-              >
-                {[...settings.testimonials, ...settings.testimonials].map((t, i) => (
-                  <TestimonialCard key={i} t={t} />
-                ))}
-              </motion.div>
+    <div className="relative">
+      <div className="flex overflow-x-hidden">
+        <motion.div
+          animate={{ x: [0, -1920] }}
+          transition={{ 
+            ease: "linear", 
+            duration: 40, 
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+          className="flex gap-8 whitespace-nowrap will-change-transform"
+        >
+          {/* Duplicate array for seamless infinite scroll */}
+          {[...(settings.testimonials || []), ...(settings.testimonials || [])].map((t, i) => (
+            <div 
+              key={i}
+              className="w-[380px] flex-shrink-0 bg-zinc-50/70 backdrop-blur-sm border border-zinc-200 rounded-3xl p-8 shadow-sm hover:shadow-lg transition-shadow duration-300"
+            >
+              <div className="flex items-center gap-4 mb-5">
+                {t.image ? (
+                  <img 
+                    src={t.image} 
+                    alt={t.name} 
+                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" 
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                    {t.name.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <p className="font-bold text-zinc-900">{t.name}</p>
+                  <p className="text-sm text-zinc-500">{t.role}</p>
+                </div>
+              </div>
+              <p className="text-zinc-700 leading-relaxed italic">"{t.message}"</p>
             </div>
-          </div>
-        </section>
-      )}
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Optional: gradient fade edges */}
+      <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+    </div>
+  </section>
+)}
 
       {/* ─── CONTACT ─────────────────────────────────────────────── */}
       {settings.visibility?.contact !== false && (
