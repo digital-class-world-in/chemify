@@ -17,9 +17,6 @@ const PUBLIC_PATHS = [
   "/super/login"
 ]
 
-// ← Change this to your real fallback institute slug
-const FALLBACK_INSTITUTE_SLUG = "chemify-classes-to17"
-
 export function AuthCheck({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading, auth } = useUser()
   const { database } = useFirebase()
