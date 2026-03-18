@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import { useFirebase } from "@/firebase"
 import {
@@ -81,8 +81,6 @@ const fadeIn = {
 }
 
 // ─── DEFAULT / FALLBACK DATA ──────────────────────────────────────
-
-// Hero fallback (using placehold.co)
 const DEFAULT_HERO = {
   title: "Your Bright Future Begins Here",
   description: "Expert guidance • Proven results • Personalized mentoring • 18+ years of excellence in competitive exam preparation",
@@ -94,7 +92,6 @@ const DEFAULT_HERO = {
   ]
 }
 
-// About fallback
 const DEFAULT_ABOUT = {
   badge: "Who We Are",
   title: "Empowering Students Since 2008",
@@ -103,7 +100,6 @@ const DEFAULT_ABOUT = {
   imageUrl: "https://placehold.co/800x1000/10b981/ffffff/png?text=About+Us+Campus"
 }
 
-// Blogs fallback
 const DEFAULT_BLOGS = [
   {
     id: 'b1',
@@ -134,10 +130,6 @@ const DEFAULT_BLOGS = [
   }
 ]
 
-
-
-
-// Courses fallback
 const DEFAULT_COURSES = [
   {
     id: 'c1',
@@ -174,7 +166,6 @@ const DEFAULT_COURSES = [
   }
 ]
 
-// Testimonials fallback (no image change needed here as they use initials)
 const DEFAULT_TESTIMONIALS = [
   {
     name: "Rahul Sharma",
@@ -196,7 +187,6 @@ const DEFAULT_TESTIMONIALS = [
   }
 ]
 
-// Stats fallback (no image)
 const DEFAULT_STATS = [
   { id: 's1', label: "Years", value: 18, suffix: "+", subLabel: "of Excellence", icon: 'Award', color: 'bg-amber-50 border-amber-100' },
   { id: 's2', label: "Students", value: 85000, suffix: "+", subLabel: "Guided Successfully", icon: 'Users', color: 'bg-blue-50 border-blue-100' },
@@ -342,8 +332,6 @@ export default function InstitutePublicWebsite() {
     paddingBottom: `${settings.styling?.sectionSpacing ?? 120}px`
   }
 
-  // ─── MERGED / FALLBACK DATA ───────────────────────────────────────
-
   const displayedHero = {
     ...DEFAULT_HERO,
     ...(settings.hero || {})
@@ -441,26 +429,26 @@ export default function InstitutePublicWebsite() {
               <Link href="#contact">Contact</Link>
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="border-zinc-200 text-zinc-700 rounded-full font-black text-[10px] uppercase px-8 h-11 shadow-sm hover:bg-zinc-50 border-none transition-all active:scale-95">
-                    Login <ChevronDown className="ml-2 w-3 h-3" />
+                  <Button variant="outline" className="border-zinc-200 text-zinc-700 rounded-full font-black text-[14px] uppercase px-8 h-11 shadow-sm hover:bg-zinc-50 border-none transition-all active:scale-95">
+                    Login <ChevronDown className="ml-2 w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-0 border-zinc-100 shadow-2xl rounded-2xl overflow-hidden mt-4 bg-white">
-                  <DropdownMenuItem asChild>
-                    <Link href="/login" className="text-sm font-bold text-zinc-700 uppercase tracking-tight">
+                  <DropdownMenuItem asChild className="p-0">
+                    <Link href="/login" className="block px-4 py-2 text-sm font-bold text-zinc-700 uppercase tracking-tight hover:bg-zinc-100">
                       Admin Login
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/staff/login" className="text-sm font-bold text-zinc-700 uppercase tracking-tight">
+                  <DropdownMenuItem asChild className="p-0">
+                    <Link href="/staff/login" className="block px-4 py-2 text-sm font-bold text-zinc-700 uppercase tracking-tight hover:bg-zinc-100">
                       Staff Login
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/student/login" className="text-sm font-bold text-zinc-700 uppercase tracking-tight">
+                  <DropdownMenuItem asChild className="p-0">
+                    <Link href="/student/login" className="block px-4 py-2 text-sm font-bold text-zinc-700 uppercase tracking-tight hover:bg-zinc-100">
                       Student Login
                     </Link>
                   </DropdownMenuItem>
@@ -469,7 +457,7 @@ export default function InstitutePublicWebsite() {
 
               <Button
                 onClick={() => { setIsSubmitted(false); setIsApplyModalOpen(true) }}
-                className="bg-primary hover:opacity-90 text-white rounded-full font-black text-[10px] uppercase px-8 h-11 shadow-lg border-none active:scale-95"
+                className="bg-primary hover:opacity-90 text-white rounded-full font-black text-[14px] uppercase px-8 h-11 shadow-lg border-none active:scale-95"
               >
                 Enquiry Now
               </Button>
@@ -530,9 +518,9 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* COURSES */}
+        {/* COURSES - Updated Link to /course-details/[id] */}
         {settings.visibility?.courses !== false && (
-          <section id="courses" style={sectionPadding} className="bg-zinc-100 -mt-16 lg:-mt-24">
+          <section id="courses" style={sectionPadding} className="bg-zinc-100 -mt-16 lg:-mt-2">
             <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
               <div className="text-center space-y-2">
                 <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
@@ -547,7 +535,10 @@ export default function InstitutePublicWebsite() {
                   .filter(c => c.showOnHomepage !== false)
                   .map((course, i) => (
                     <motion.div key={course.id} {...fadeIn} transition={{ delay: i * 0.06 }}>
-                      <DetailedCourseCard course={course} />
+                      {/* Changed link here */}
+                      <Link href={`/course-details/${course.id}`} className="block h-full group">
+                        <DetailedCourseCard course={course} />
+                      </Link>
                     </motion.div>
                   ))}
               </div>
@@ -697,81 +688,126 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* TESTIMONIALS - Single card view with carousel */}
+        {/* TESTIMONIALS - Two rows, opposite scroll, exact card match */}
         {settings.visibility?.testimonials !== false && (
-          <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-6 text-center mb-12">
-              <h2 className="text-4xl lg:text-5xl font-black text-zinc-900">
-                Real Stories from Real Achievers
-              </h2>
-              <p className="mt-4 text-lg text-zinc-600 max-w-2xl mx-auto">
-                Hear what our students and parents say about their journey with us
-              </p>
-            </div>
-
-            <div className="relative max-w-5xl mx-auto px-12">
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {displayedTestimonials.map((t: { image: string | Blob | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; role: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined }, i: Key | null | undefined) => (
-                    <div 
-                      key={i}
-                      className="flex-[0_0_100%] min-w-0 px-4"
-                    >
-                      <div className="bg-zinc-50/70 backdrop-blur-sm border border-zinc-200 rounded-3xl p-8 md:p-12 shadow-sm mx-auto max-w-3xl">
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
-                          {t.image ? (
-                            <img 
-                              src={t.image} 
-                              alt={t.name} 
-                              className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-white shadow-md flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-3xl flex-shrink-0 shadow-md">
-                              {t.name?.charAt(0) || '?'}
-                            </div>
-                          )}
-                          <div className="text-center md:text-left">
-                            <p className="font-bold text-xl md:text-2xl text-zinc-900">{t.name}</p>
-                            <p className="text-base md:text-lg text-zinc-600 mt-1">{t.role}</p>
-                          </div>
-                        </div>
-                        <p className="text-lg md:text-xl text-zinc-700 leading-relaxed italic text-center md:text-left">
-                          "{t.message}"
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          <section className="py-10 md:py-14 bg-white overflow-hidden">
+            <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8 md:mb-10">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-zinc-900 tracking-tight">
+                  What Our Students Say
+                </h2>
               </div>
 
-              {/* Navigation buttons */}
-              <button
-                onClick={() => emblaApi?.scrollPrev()}
-                className="absolute left-0 md:left-4 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-zinc-700 hover:text-primary z-10 border-none transition-colors"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              <button
-                onClick={() => emblaApi?.scrollNext()}
-                className="absolute right-0 md:right-4 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-zinc-700 hover:text-primary z-10 border-none transition-colors"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
+              <div className="space-y-6 md:space-y-8">
+                {/* Row 1 - scrolling LEFT */}
+                <div className="overflow-hidden">
+                  <motion.div
+                    className="flex gap-4 sm:gap-5 whitespace-nowrap"
+                    animate={{ x: [0, -3200] }}
+                    transition={{
+                      ease: "linear",
+                      duration: 42,
+                      repeat: Infinity,
+                    }}
+                  >
+                    {(() => {
+                      const testimonials =
+                        Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
+                          ? settings.testimonials
+                          : DEFAULT_TESTIMONIALS
 
-              {/* Dots indicator */}
-              <div className="flex justify-center gap-3 mt-8">
-                {displayedTestimonials.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => emblaApi?.scrollTo(i)}
-                    className={cn(
-                      "w-3 h-3 rounded-full transition-all",
-                      emblaApi?.selectedScrollSnap === i
-                        ? "bg-primary w-8"
-                        : "bg-zinc-300 hover:bg-zinc-400"
-                    )}
-                  />
-                ))}
+                      const repeated = Array(7).fill(testimonials).flat()
+
+                      return repeated.map((t, i) => (
+                        <div
+                          key={i}
+                          className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
+                        >
+                          <div className="flex items-start gap-3.5">
+                            {t.image ? (
+                              <img
+                                src={t.image}
+                                alt={t.name}
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
+                                {t.name?.charAt(0) || "?"}
+                              </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
+                                {t.name}
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
+                                {t.role || "STUDENT"}
+                              </p>
+                              <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
+                                {t.message}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    })()}
+                  </motion.div>
+                </div>
+
+                {/* Row 2 - scrolling RIGHT */}
+                <div className="overflow-hidden">
+                  <motion.div
+                    className="flex gap-4 sm:gap-5 whitespace-nowrap"
+                    animate={{ x: [-3200, 0] }}
+                    transition={{
+                      ease: "linear",
+                      duration: 48,
+                      repeat: Infinity,
+                    }}
+                  >
+                    {(() => {
+                      const testimonials =
+                        Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
+                          ? settings.testimonials
+                          : DEFAULT_TESTIMONIALS
+
+                      const repeated = Array(7).fill(testimonials).flat()
+
+                      return repeated.map((t, i) => (
+                        <div
+                          key={`row2-${i}`}
+                          className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
+                        >
+                          <div className="flex items-start gap-3.5">
+                            {t.image ? (
+                              <img
+                                src={t.image}
+                                alt={t.name}
+                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
+                                {t.name?.charAt(0) || "?"}
+                              </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
+                                {t.name}
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
+                                {t.role || "STUDENT"}
+                              </p>
+                              <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
+                                {t.message}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    })()}
+                  </motion.div>
+                </div>
               </div>
             </div>
           </section>
@@ -921,7 +957,9 @@ export default function InstitutePublicWebsite() {
                 <ul className="space-y-3 text-zinc-400">
                   {displayedCourses.slice(0, 5).map(c => (
                     <li key={c.id}>
-                      <Link href={`/course/${c.id}`} className="hover:text-white transition">{c.name}</Link>
+                      <Link href={`/course-details/${c.id}`} className="hover:text-white transition">
+                        {c.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -1081,38 +1119,36 @@ function DetailedCourseCard({ course }: { course: any }) {
     : 0
 
   return (
-    <Link href={`/course/${course.id}`} className="block h-full group">
-      <Card className="border-2 border-zinc-200 rounded-2xl overflow-hidden group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 flex flex-col h-full">
-        <div className="h-56 relative overflow-hidden">
-          <img
-            src={course.image}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            alt={course.name}
-          />
-          {course.type && (
-            <div className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">
-              {course.type}
-            </div>
+    <Card className="border-2 border-zinc-200 rounded-2xl overflow-hidden group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 flex flex-col h-full">
+      <div className="h-56 relative overflow-hidden">
+        <img
+          src={course.image}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          alt={course.name}
+        />
+        {course.type && (
+          <div className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">
+            {course.type}
+          </div>
+        )}
+      </div>
+      <CardContent className="p-6 flex-1 flex flex-col">
+        <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+          {course.name}
+        </h3>
+        <p className="text-zinc-600 text-sm mb-4 flex-1 line-clamp-3">
+          {course.description}
+        </p>
+        <div className="flex items-center gap-3 mt-auto">
+          <span className="text-2xl font-black text-primary">
+            ₹{Number(course.sellingPrice || course.price || 0).toLocaleString()}
+          </span>
+          {discount > 0 && (
+            <Badge className="bg-green-500 text-white border-none">{discount}% OFF</Badge>
           )}
         </div>
-        <CardContent className="p-6 flex-1 flex flex-col">
-          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">
-            {course.name}
-          </h3>
-          <p className="text-zinc-600 text-sm mb-4 flex-1 line-clamp-3">
-            {course.description}
-          </p>
-          <div className="flex items-center gap-3 mt-auto">
-            <span className="text-2xl font-black text-primary">
-              ₹{Number(course.sellingPrice || course.price || 0).toLocaleString()}
-            </span>
-            {discount > 0 && (
-              <Badge className="bg-green-500 text-white border-none">{discount}% OFF</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+      </CardContent>
+    </Card>
   )
 }
 
