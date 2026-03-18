@@ -102,6 +102,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
   const [courses, setCourses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
+
   const DUMMY_COURSE = {
   name: "Demo Course Title",
   description: "This is a sample course description. Real course data will appear here when available.",
@@ -123,6 +124,8 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     4: "Career support"
   }
 }
+const finalCourse = course || DUMMY_COURSE;
+const isDummy = !course;
 const [courseNotFound, setCourseNotFound] = useState(false)
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false)
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
