@@ -1193,3 +1193,4 @@ function AnimatedCounter({ value, duration = 2 }: { value: number; duration?: nu
 
   return <motion.span ref={ref}>{rounded}</motion.span>
 }
+
