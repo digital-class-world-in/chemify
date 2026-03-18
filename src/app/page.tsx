@@ -134,6 +134,9 @@ const DEFAULT_BLOGS = [
   }
 ]
 
+
+
+
 // Courses fallback
 const DEFAULT_COURSES = [
   {
