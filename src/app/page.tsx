@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
 import { useParams } from "next/navigation"
 import { useFirebase } from "@/firebase"
 import {
@@ -215,7 +215,7 @@ const STAT_ICONS: Record<string, any> = {
 }
 
 export default function InstitutePublicWebsite() {
-  const slug = process.env.NEXT_PUBLIC_DB_SLUG || "demo-institute"
+  const slug = process.env.NEXT_PUBLIC_DB_SLUG || ""
 
   const { database } = useFirebase()
 
@@ -712,7 +712,7 @@ export default function InstitutePublicWebsite() {
             <div className="relative max-w-5xl mx-auto px-12">
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
-                  {displayedTestimonials.map((t, i) => (
+                  {displayedTestimonials.map((t: { image: string | Blob | undefined; name: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; role: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined }, i: Key | null | undefined) => (
                     <div 
                       key={i}
                       className="flex-[0_0_100%] min-w-0 px-4"
