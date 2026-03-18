@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect } from "react"
 import { useFirebase } from "@/firebase"
 import { ref, onValue, off, push, get } from "firebase/database"
 import { motion } from "framer-motion"
@@ -68,34 +67,41 @@ const fadeIn = {
   transition: { duration: 0.8, ease: "easeOut" }
 }
 
+// FULL LOREM IPSUM PLACEHOLDER CONTENT WHEN FIREBASE DATA IS MISSING
 const DEFAULT_INFRA = [
   {
     id: '1',
-    title: "Smart Classrooms",
-    description: "Equipped with interactive touch-panels and digital audio systems for a modern learning experience.",
-    image: "https://images.unsplash.com/photo-1523050853064-8521a3930ff4?q=80&w=2070&auto=format&fit=crop"
+    title: "Lorem Smart Classrooms",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+    image: "https://picsum.photos/id/29/2070/600"
   },
   {
     id: '2',
-    title: "Computer Labs",
-    description: "High-performance systems with the latest software and 24/7 high-speed fiber optic internet.",
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop"
+    title: "Lorem Computer Labs",
+    description: "Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.",
+    image: "https://picsum.photos/id/160/2070/600"
   },
   {
     id: '3',
-    title: "Digital Library",
-    description: "Access to thousands of e-books, research papers, and technical journals from around the globe.",
-    image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2070&auto=format&fit=crop"
+    title: "Lorem Digital Library",
+    description: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste.",
+    image: "https://picsum.photos/id/201/2070/600"
   }
 ]
 
 const DEFAULT_LIFECYCLE = [
-  { id: 1, title: "Admission", icon: 'UserPlus', desc: "Simple registration and counseling process to identify your goals." },
-  { id: 2, title: "Orientation", icon: 'Award', desc: "Introduction to campus culture, tools, and the academic roadmap." },
-  { id: 3, title: "Classroom Learning", icon: 'BookOpen', desc: "Concept-focused learning in our modern smart-classroom environments." },
-  { id: 4, title: "Practical Training", icon: 'Monitor', desc: "Developing hands-on skills with real-world software and projects." },
-  { id: 5, title: "Internship", icon: 'Briefcase', desc: "Applying skills in a professional corporate setting with partners." },
-  { id: 6, title: "Placement", icon: 'Trophy', desc: "Direct hiring by top-tier global companies through our cell." }
+  { id: 1, title: "Admission", icon: 'UserPlus', desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+  { id: 2, title: "Orientation", icon: 'Award', desc: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." },
+  { id: 3, title: "Classroom Learning", icon: 'BookOpen', desc: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi." },
+  { id: 4, title: "Practical Training", icon: 'Monitor', desc: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore." },
+  { id: 5, title: "Internship", icon: 'Briefcase', desc: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia." },
+  { id: 6, title: "Placement", icon: 'Trophy', desc: "Sunt in culpa qui officia deserunt mollit anim id est laborum." }
+]
+
+const DEFAULT_COURSES = [
+  { id: 'c1', name: "Lorem Diploma in Computer Science" },
+  { id: 'c2', name: "Ipsum Advanced Web Development" },
+  { id: 'c3', name: "Dolor Digital Marketing Certification" }
 ]
 
 const ICON_MAP: Record<string, any> = {
@@ -105,12 +111,10 @@ const ICON_MAP: Record<string, any> = {
   Monitor: <Monitor className="w-6 h-6" />,
   Briefcase: <Briefcase className="w-6 h-6" />,
   Trophy: <Trophy className="w-6 h-6" />,
-  Star: <Star className="w-6 h-6" />,
-  TrendingUp: <TrendingUp className="w-6 h-6" />,
 }
 
 export default function InfrastructurePage({ params }: { params: Promise<{ id: string }> }) {
-   const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
+  const id = "JzZYbd6RobXVEn42uupTklHW1sn1"
   const { database } = useFirebase()
   
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -121,7 +125,7 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
   const [courses, setCourses] = useState<any[]>([])
   const [hero, setHero] = useState<any>({
     title: "Campus Lifecycle & Modern Infrastructure",
-    description: "Experience a Smart Learning Environment Designed for Excellence.",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     buttonText: "Explore Facilities"
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -168,7 +172,8 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
     const coursesRef = ref(database, `${rootPath}/website_courses`)
     const unsubCourses = onValue(coursesRef, (s) => {
       const data = s.val() || {}
-      setCourses(Object.keys(data).map(k => ({ ...data[k], id: k })))
+      const courseItems = Object.keys(data).map(k => ({ ...data[k], id: k }))
+      setCourses(courseItems.length > 0 ? courseItems : DEFAULT_COURSES)
     })
 
     const infraRef = ref(database, `${rootPath}/website_settings/infrastructure`)
@@ -184,8 +189,14 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
           setLifecycleSteps(DEFAULT_LIFECYCLE)
         }
       } else {
+        // NO DATA FROM FIREBASE → FULL LOREM IPSUM PLACEHOLDER MODE
         setInfraData(DEFAULT_INFRA)
         setLifecycleSteps(DEFAULT_LIFECYCLE)
+        setHero({
+          title: "Campus Lifecycle & Modern Infrastructure",
+          description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+          buttonText: "Explore Facilities"
+        })
       }
       setIsLoading(false)
     })
@@ -222,10 +233,11 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
     </div>
   )
 
+  // LOREM IPSUM PLACEHOLDER CONTACT WHEN NO DATA
   const publicContact = {
-    phone: profile?.contactPhone || profile?.phone || settings?.contact?.phone || "",
-    email: profile?.contactEmail || profile?.email || settings?.contact?.email || "",
-    address: profile?.address || settings?.contact?.address || ""
+    phone: profile?.contactPhone || profile?.phone || settings?.contact?.phone || "+91 98765 43210",
+    email: profile?.contactEmail || profile?.email || settings?.contact?.email || "info@loremipsum.edu",
+    address: profile?.address || settings?.contact?.address || "Lorem Street, Ipsum City, 123456"
   }
 
   return (
@@ -235,34 +247,34 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
         isScrolled ? "bg-white/90 backdrop-blur-xl shadow-xl py-3" : "bg-transparent py-6"
       )}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
+          <Link href={`/#home`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-               <img 
-  src={profile.logoUrl} 
-  className="h-20 w-auto object-contain" 
-  alt="Logo" 
-/>
+              <img 
+                src={profile.logoUrl} 
+                className="h-20 w-auto object-contain" 
+                alt="Logo" 
+              />
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
                   <School className="w-6 h-6" />
                 </div>
                 <h1 className="text-xl font-black uppercase tracking-tighter text-zinc-900 hidden sm:block">
-                  {profile?.instituteName || "INSTITUTE"}
+                  {profile?.instituteName || "Lorem Ipsum Institute"}
                 </h1>
               </>
             )}
           </Link>
 
-           <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
-                     <Link href="#home">Home</Link>
-                     <Link href="#about">About Us</Link>
-                     <Link href="#courses">Courses</Link>
-                     <Link href="/infrastructure">Facilities</Link>
-                     <Link href="/gallery">Gallery</Link>
-                     <Link href="#blog">Blogs</Link>
-                     <Link href="#contact">Contact</Link>
-                   </nav>
+          <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
+            <Link href="/#home">Home</Link>
+            <Link href="/#about">About Us</Link>
+            <Link href="/#courses">Courses</Link>
+            <Link href="/infrastructure">Facilities</Link>
+            <Link href="/gallery">Gallery</Link>
+            <Link href="/#blog">Blogs</Link>
+            <Link href="/#contact">Contact</Link>
+          </nav>
 
           <div className="flex items-center gap-4">
             <DropdownMenu>
@@ -298,7 +310,7 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
           <motion.div {...fadeIn} className="max-w-3xl space-y-8">
             <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">
-              <Link href={`/#home`} className="hover:text-primary">Home</Link>
+              <Link href={`/#`} className="hover:text-primary">Home</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-zinc-900">Infrastructure</span>
             </nav>
@@ -369,7 +381,7 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
             {profile?.logoUrl ? (
               <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
             ) : (
-              <h3 className="text-2xl font-black uppercase tracking-tighter">Institute Node</h3>
+              <h3 className="text-2xl font-black uppercase tracking-tighter">Lorem Ipsum Institute</h3>
             )}
             <p className="text-zinc-500 text-sm leading-relaxed font-medium">Developing professional excellence through industry-standard skill acquisition.</p>
             <div className="flex gap-4">
@@ -404,7 +416,7 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
         </div>
         
         <div className="max-w-7xl mx-auto px-6 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">© {format(new Date(), "yyyy")} All Rights Reserved | {profile?.instituteName || "Your Institute"}</p>
+          <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">© {format(new Date(), "yyyy")} All Rights Reserved | Lorem Ipsum Institute</p>
         </div>
       </footer>
 
@@ -444,7 +456,9 @@ export default function InfrastructurePage({ params }: { params: Promise<{ id: s
                     <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Select Program</Label>
                     <Select value={formData.course} onValueChange={val => setFormData({...formData, course: val})} required>
                       <SelectTrigger className="h-14 rounded-2xl border-zinc-100 bg-zinc-50 shadow-inner font-bold text-black"><SelectValue placeholder="Choose a course..." /></SelectTrigger>
-                      <SelectContent>{courses.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>
+                        {courses.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">

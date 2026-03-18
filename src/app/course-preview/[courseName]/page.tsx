@@ -88,9 +88,10 @@ const DEFAULT_OUTCOMES = [
   "Career counseling & placement support"
 ]
 
-export default function CourseDetailPage({ params }: { params: Promise<{ id: string, courseId: string }> }) {
-  const id = "JzZYbd6RobXVEn42uupTklHW1sn1";
-  const {  courseId } = use(params)
+export default function CourseDetailPage({ params }: { params: { id: string } }) {
+  const instituteId = "JzZYbd6RobXVEn42uupTklHW1sn1";
+  const courseId = params.id;
+  const id = "b2";
   const { database } = useFirebase()
   
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -101,7 +102,28 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const [courses, setCourses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
-  
+  const DUMMY_COURSE = {
+  name: "Demo Course Title",
+  description: "This is a sample course description. Real course data will appear here when available.",
+  image: "https://placehold.co/800x500?text=Course+Preview",
+  backgroundImage: "https://placehold.co/1200x800?text=Background",
+  duration: "3",
+  hours: "120",
+  totalChapters: "10",
+  language: "English",
+  provideCertificate: "Yes",
+  paymentMode: "Full Payment",
+  sellingPrice: 1999,
+  originalPrice: 3999,
+  type: "Online",
+  outcomes: {
+    1: "Gain practical skills",
+    2: "Work on real projects",
+    3: "Get certification",
+    4: "Career support"
+  }
+}
+const [courseNotFound, setCourseNotFound] = useState(false)
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false)
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

@@ -80,11 +80,11 @@ const fadeIn = {
   transition: { duration: 0.8, ease: "easeOut" }
 }
 
-// ─── DEFAULT / FALLBACK DATA ──────────────────────────────────────
+// ─── DEFAULT / FALLBACK DATA ── Dummy lorem ipsum style ─────
 const DEFAULT_HERO = {
-  title: "Your Bright Future Begins Here",
-  description: "Expert guidance • Proven results • Personalized mentoring • 18+ years of excellence in competitive exam preparation",
-  buttonText: "Explore All Courses",
+  title: "Lorem Ipsum Dolor Sit Amet",
+  description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
+  buttonText: "Discover More",
   slides: [
     { imageUrl: "https://placehold.co/800x1000/3b82f6/ffffff/png?text=Hero+Slide+1" },
     { imageUrl: "https://placehold.co/800x1000/8b5cf6/ffffff/png?text=Hero+Slide+2" },
@@ -93,39 +93,39 @@ const DEFAULT_HERO = {
 }
 
 const DEFAULT_ABOUT = {
-  badge: "Who We Are",
-  title: "Empowering Students Since 2008",
-  description1: "We don't just teach — we build strong foundations, exam temperament, discipline, and unshakable confidence.",
-  description2: "With systematic teaching methods, weekly performance tracking, individual attention, and a motivating environment, our students consistently secure top ranks in JEE, NEET, GUJCET & Boards.",
-  imageUrl: "https://placehold.co/800x1000/10b981/ffffff/png?text=About+Us+Campus"
+  badge: "About Us",
+  title: "Lorem Ipsum About Us Title",
+  description1: "Lorem ipsum dolor sit , consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+  description2: "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.",
+  imageUrl: "https://placehold.co/800x1000/10b981/ffffff/png?text=About+Us+Lorem+Ipsum"
 }
 
 const DEFAULT_BLOGS = [
   {
     id: 'b1',
-    title: "How to Score 300+ in JEE Main Physics in 2026",
-    category: "JEE Strategy",
-    image: "https://placehold.co/600x400/3b82f6/ffffff/png?text=JEE+Physics+2026",
-    description: "Chapter-wise weightage, best books, daily routine, important formulas & last 3 months revision plan...",
-    date: "March 10, 2026",
-    readTime: "8 min",
+    title: "Lorem Ipsum Blog Title One",
+    category: "Lorem Category",
+    image: "https://placehold.co/600x400/3b82f6/ffffff/png?text=Blog+Lorem+1",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...",
+    date: "January 15, 2025",
+    readTime: "5 min",
   },
   {
     id: 'b2',
-    title: "NEET Biology – 350+ in 90 Days Strategy",
-    category: "NEET Tips",
-    image: "https://placehold.co/600x400/10b981/ffffff/png?text=NEET+Biology+90+Days",
-    description: "High-yield chapters, diagram tricks, NCERT line-by-line strategy, previous year trends...",
-    date: "March 05, 2026",
+    title: "Lorem Ipsum Blog Title Two",
+    category: "Ipsum Category",
+    image: "https://placehold.co/600x400/10b981/ffffff/png?text=Blog+Lorem+2",
+    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat...",
+    date: "February 10, 2025",
     readTime: "7 min",
   },
   {
     id: 'b3',
-    title: "How to Balance Boards + Entrance Exams in Class 12",
-    category: "Time Management",
-    image: "https://placehold.co/600x400/ec4899/ffffff/png?text=Balance+Class+12",
-    description: "Smart timetable, avoiding burnout, best study hours, revision techniques used by toppers...",
-    date: "Feb 28, 2026",
+    title: "Lorem Ipsum Blog Title Three",
+    category: "Dolor Category",
+    image: "https://placehold.co/600x400/ec4899/ffffff/png?text=Blog+Lorem+3",
+    description: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur...",
+    date: "March 05, 2025",
     readTime: "6 min",
   }
 ]
@@ -133,34 +133,34 @@ const DEFAULT_BLOGS = [
 const DEFAULT_COURSES = [
   {
     id: 'c1',
-    name: "2-Year Integrated JEE + Boards (Class 11)",
-    description: "Strong foundation + advanced problem solving + weekly tests + DPPs + doubt resolution + performance analysis.",
-    image: "https://placehold.co/600x400/3b82f6/ffffff/png?text=2+Year+JEE",
+    name: "Lorem Ipsum Course One",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    image: "https://placehold.co/600x400/3b82f6/ffffff/png?text=Course+Lorem+1",
     type: "Long Term",
-    sellingPrice: 98000,
-    originalPrice: 125000,
+    sellingPrice: 99999,
+    originalPrice: 149999,
     showOnHomepage: true,
     status: "Published"
   },
   {
     id: 'c2',
-    name: "1-Year NEET Crash Course (Class 12 / Droppers)",
-    description: "Intensive revision + 50+ full mocks + daily practice + error analysis + personal mentoring.",
-    image: "https://placehold.co/600x400/10b981/ffffff/png?text=NEET+Crash",
+    name: "Lorem Ipsum Course Two",
+    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    image: "https://placehold.co/600x400/10b981/ffffff/png?text=Course+Lorem+2",
     type: "Crash Course",
-    sellingPrice: 68000,
-    originalPrice: 90000,
+    sellingPrice: 59999,
+    originalPrice: 89999,
     showOnHomepage: true,
     status: "Published"
   },
   {
     id: 'c3',
-    name: "Foundation + Olympiad Batch (Class 9 & 10)",
-    description: "NTSE, Olympiads, Maths & Science foundation for future JEE/NEET preparation.",
-    image: "https://placehold.co/600x400/ec4899/ffffff/png?text=Foundation+9-10",
+    name: "Lorem Ipsum Course Three",
+    description: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+    image: "https://placehold.co/600x400/ec4899/ffffff/png?text=Course+Lorem+3",
     type: "Foundation",
-    sellingPrice: 52000,
-    originalPrice: 68000,
+    sellingPrice: 39999,
+    originalPrice: 59999,
     showOnHomepage: true,
     status: "Published"
   }
@@ -168,30 +168,30 @@ const DEFAULT_COURSES = [
 
 const DEFAULT_TESTIMONIALS = [
   {
-    name: "Rahul Sharma",
-    role: "JEE Advanced 2025 – AIR 142",
-    message: "The regular tests, detailed analysis, and 24/7 doubt support helped me improve my rank dramatically. Best decision ever!",
+    name: "Lorem Ipsum Name",
+    role: "Student 2025",
+    message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     image: null
   },
   {
-    name: "Sneha Patel",
-    role: "NEET 2025 – 692/720",
-    message: "Biology concepts became crystal clear with amazing faculty and revision tricks. Truly grateful!",
+    name: "Dolor Sit Amet",
+    role: "Student 2025",
+    message: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     image: null
   },
   {
-    name: "Aryan Desai",
-    role: "Gujarat Board Topper – 99.1%",
-    message: "Weekly performance tracking and personal mentoring made all the difference. Highly recommended!",
+    name: "Consectetur Adipiscing",
+    role: "Student 2025",
+    message: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
     image: null
   }
 ]
 
 const DEFAULT_STATS = [
-  { id: 's1', label: "Years", value: 18, suffix: "+", subLabel: "of Excellence", icon: 'Award', color: 'bg-amber-50 border-amber-100' },
-  { id: 's2', label: "Students", value: 85000, suffix: "+", subLabel: "Guided Successfully", icon: 'Users', color: 'bg-blue-50 border-blue-100' },
-  { id: 's3', label: "Success Rate", value: 91, suffix: "%", subLabel: "in Top Exams", icon: 'Trophy', color: 'bg-emerald-50 border-emerald-100' },
-  { id: 's4', label: "Faculty", value: 65, suffix: "+", subLabel: "Expert Mentors", icon: 'GraduationCap', color: 'bg-purple-50 border-purple-100' },
+  { id: 's1', label: "Years", value: 15, suffix: "+", subLabel: "Experience", icon: 'Award', color: 'bg-amber-50 border-amber-100' },
+  { id: 's2', label: "Students", value: 50000, suffix: "+", subLabel: "Trained", icon: 'Users', color: 'bg-blue-50 border-blue-100' },
+  { id: 's3', label: "Success", value: 95, suffix: "%", subLabel: "Rate", icon: 'Trophy', color: 'bg-emerald-50 border-emerald-100' },
+  { id: 's4', label: "Faculty", value: 50, suffix: "+", subLabel: "Members", icon: 'GraduationCap', color: 'bg-purple-50 border-purple-100' },
 ]
 
 const STAT_ICONS: Record<string, any> = {
@@ -206,7 +206,6 @@ const STAT_ICONS: Record<string, any> = {
 
 export default function InstitutePublicWebsite() {
   const slug = process.env.NEXT_PUBLIC_DB_SLUG || ""
-
   const { database } = useFirebase()
 
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -392,7 +391,6 @@ export default function InstitutePublicWebsite() {
 
       <div className="min-h-screen bg-white overflow-x-hidden selection:bg-primary/20" style={{ fontFamily: settings.styling?.fontFamily || 'Poppins' }}>
 
-        {/* HEADER */}
         <header
           className={cn(
             "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
@@ -402,11 +400,7 @@ export default function InstitutePublicWebsite() {
           <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
             <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-all">
               {profile?.logoUrl ? (
-                <img 
-                  src={profile.logoUrl} 
-                  className="h-20 w-auto object-contain" 
-                  alt="Institute Logo" 
-                />
+                <img src={profile.logoUrl} className="h-20 w-auto object-contain" alt="Institute Logo" />
               ) : (
                 <>
                   <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
@@ -465,7 +459,6 @@ export default function InstitutePublicWebsite() {
           </div>
         </header>
 
-        {/* HERO */}
         {settings.visibility?.hero !== false && (
           <section
             id="home"
@@ -473,17 +466,14 @@ export default function InstitutePublicWebsite() {
             style={{ minHeight: `${settings.styling?.heroImageHeight ?? 700}px` }}
           >
             <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 -skew-x-12 transform origin-top-right translate-x-32 hidden lg:block" />
-
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center w-full relative z-10">
               <motion.div {...fadeIn} className="space-y-6 lg:space-y-8">
                 <h1 className="font-black leading-[1.1] tracking-tight text-zinc-900" style={heroTitleStyle}>
                   {displayedHero.title}
                 </h1>
-
                 <p className="text-base lg:text-lg font-medium leading-relaxed max-w-xl text-zinc-600" style={heroDescStyle}>
                   {displayedHero.description}
                 </p>
-
                 <div className="flex flex-wrap gap-4 pt-2 lg:pt-4">
                   <Button
                     onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
@@ -494,7 +484,6 @@ export default function InstitutePublicWebsite() {
                   </Button>
                 </div>
               </motion.div>
-
               <motion.div
                 {...fadeIn}
                 transition={{ delay: 0.3 }}
@@ -508,8 +497,8 @@ export default function InstitutePublicWebsite() {
                   />
                 ) : (
                   <img
-                    src={displayedHero.image || "https://placehold.co/800x1000/3b82f6/ffffff/png?text=Hero+Image"}
-                    alt="Institute Campus"
+                    src={displayedHero.image || DEFAULT_HERO.slides[0].imageUrl}
+                    alt="Lorem Ipsum Hero Image"
                     className="w-full h-full object-cover rounded-3xl shadow-2xl"
                   />
                 )}
@@ -518,35 +507,71 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* COURSES - Updated Link to /course-details/[id] */}
-        {settings.visibility?.courses !== false && (
-          <section id="courses" style={sectionPadding} className="bg-zinc-100 -mt-16 lg:-mt-2">
-            <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
-              <div className="text-center space-y-2">
-                <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
-                  Our Flagship Programs
-                </h2>
-                <p className="text-zinc-600 max-w-3xl mx-auto">
-                  Result-oriented batches for JEE, NEET, GUJCET, Boards & Foundation
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
-                {displayedCourses
-                  .filter(c => c.showOnHomepage !== false)
-                  .map((course, i) => (
-                    <motion.div key={course.id} {...fadeIn} transition={{ delay: i * 0.06 }}>
-                      {/* Changed link here */}
-                      <Link href={`/course-details/${course.id}`} className="block h-full group">
-                        <DetailedCourseCard course={course} />
-                      </Link>
-                    </motion.div>
-                  ))}
-              </div>
-            </div>
-          </section>
-        )}
+       {settings.visibility?.courses !== false ? (
+  <section
+    id="courses"
+    style={sectionPadding}
+    className="bg-zinc-100 -mt-16 lg:-mt-2"
+  >
+    <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
+      
+      <div className="text-center space-y-2">
+        <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
+          Our Flagship Programs
+        </h2>
+        <p className="text-zinc-600 max-w-3xl mx-auto">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit.
+        </p>
+      </div>
 
-        {/* STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
+
+        {(displayedCourses?.filter(c => c.showOnHomepage !== false)?.length > 0
+          ? displayedCourses
+              .filter(c => c.showOnHomepage !== false)
+              .map((course, i) => (
+                <motion.div
+                  key={course.id}
+                  {...fadeIn}
+                  transition={{ delay: i * 0.06 }}
+                >
+                  <Link
+                    href={`/course-preview/${course.id}`}
+                    className="block h-full group"
+                  >
+                    <DetailedCourseCard course={course} />
+                  </Link>
+                </motion.div>
+              ))
+          : [1, 2, 3].map((_, i) => {
+              const dummyCourse = {
+                id: `dummy-${i}`,
+                title: "Sample Course",
+                description: "This is a demo course description",
+                image: "/default-course.jpg",
+              };
+
+              return (
+                <motion.div
+                  key={dummyCourse.id}
+                  {...fadeIn}
+                  transition={{ delay: i * 0.06 }}
+                >
+                  <Link
+                    href={`/course-preview/${dummyCourse.id}`}
+                    className="block h-full group"
+                  >
+                    <DetailedCourseCard course={dummyCourse} />
+                  </Link>
+                </motion.div>
+              );
+            }))}
+
+      </div>
+    </div>
+  </section>
+) : null}
+
         {settings.visibility?.stats !== false && (
           <section className="bg-white border-y border-zinc-100 py-16 overflow-hidden">
             <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
@@ -558,7 +583,7 @@ export default function InstitutePublicWebsite() {
                     fontFamily: settings.milestoneHeading?.fontFamily ? `'${settings.milestoneHeading.fontFamily}', sans-serif` : 'inherit',
                   }}
                 >
-                  {settings.milestoneHeading?.text || "Numbers That Define Our Journey"}
+                  {settings.milestoneHeading?.text || "Lorem Ipsum Numbers"}
                 </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-10">
@@ -585,16 +610,15 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* ABOUT */}
         {settings.visibility?.about !== false && (
           <section id="about" style={{ ...sectionPadding, paddingTop: '60px' }} className="bg-zinc-50">
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
               <motion.div {...fadeIn} className="relative group lg:sticky lg:top-32">
                 <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-8 border-zinc-100">
                   <img
-                    src={displayedAbout.imageUrl}
+                    src={displayedAbout.imageUrl || "https://placehold.co/800x1000/10b981/ffffff/png?text=About+Us+Placeholder"}
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    alt="Institute Campus"
+                    alt="About Us Image"
                   />
                 </div>
               </motion.div>
@@ -602,22 +626,56 @@ export default function InstitutePublicWebsite() {
               <motion.div {...fadeIn} transition={{ delay: 0.3 }} className="space-y-8">
                 <div className="space-y-4">
                   <Badge className="bg-primary/10 text-primary border-none uppercase font-black text-[10px] px-4 tracking-widest rounded-full">
-                    {displayedAbout.badge}
+                    {displayedAbout.badge || "About Us"}
                   </Badge>
                   <h2 className="text-4xl lg:text-6xl font-black text-zinc-900 uppercase tracking-tight leading-[0.9]">
-                    {displayedAbout.title}
+                    {displayedAbout.title || "Lorem Ipsum About Us Title"}
                   </h2>
                 </div>
+
                 <div className="space-y-6 text-zinc-600 text-lg leading-relaxed">
-                  <p>{displayedAbout.description1}</p>
-                  <p>{displayedAbout.description2}</p>
+                  <p>{displayedAbout.description1 || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."}</p>
+                  <p>{displayedAbout.description2 || "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."}</p>
+
+                  <div className="mt-10">
+                    <h4 className="text-2xl md:text-3xl font-black text-zinc-900 mb-6 text-center lg:text-left flex items-center justify-center lg:justify-start gap-3">
+                      <span className="text-primary text-3xl">◎</span> OUR CORE MISSION
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+  <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div className="flex items-start gap-4">
+      <div className="flex-shrink-0 mt-1">
+        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+          ✓
+        </div>
+      </div>
+      <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
+        Learn accounting, GST billing, and business management using industry-standard software.
+      </p>
+    </div>
+  </div>
+
+  <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div className="flex items-start gap-4">
+      <div className="flex-shrink-0 mt-1">
+        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+          ✓
+        </div>
+      </div>
+      <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
+        Master Word, Excel, PowerPoint, and practical office tools for real-world productivity.
+      </p>
+    </div>
+  </div>
+</div>
+                  </div>
                 </div>
               </motion.div>
             </div>
           </section>
         )}
 
-        {/* BLOG SECTION */}
         {settings.visibility?.blog !== false && (
           <section id="blog" style={sectionPadding} className="bg-zinc-100">
             <div className="max-w-7xl mx-auto px-6 space-y-16">
@@ -626,7 +684,7 @@ export default function InstitutePublicWebsite() {
                   Learning Resources & Tips
                 </Badge>
                 <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
-                  Latest Articles & Exam Strategies
+                  Latest Articles & Strategies
                 </h2>
               </div>
 
@@ -688,7 +746,6 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* TESTIMONIALS - Two rows, opposite scroll, exact card match */}
         {settings.visibility?.testimonials !== false && (
           <section className="py-10 md:py-14 bg-white overflow-hidden">
             <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -699,7 +756,6 @@ export default function InstitutePublicWebsite() {
               </div>
 
               <div className="space-y-6 md:space-y-8">
-                {/* Row 1 - scrolling LEFT */}
                 <div className="overflow-hidden">
                   <motion.div
                     className="flex gap-4 sm:gap-5 whitespace-nowrap"
@@ -715,9 +771,7 @@ export default function InstitutePublicWebsite() {
                         Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
                           ? settings.testimonials
                           : DEFAULT_TESTIMONIALS
-
                       const repeated = Array(7).fill(testimonials).flat()
-
                       return repeated.map((t, i) => (
                         <div
                           key={i}
@@ -735,7 +789,6 @@ export default function InstitutePublicWebsite() {
                                 {t.name?.charAt(0) || "?"}
                               </div>
                             )}
-
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
                                 {t.name}
@@ -754,7 +807,6 @@ export default function InstitutePublicWebsite() {
                   </motion.div>
                 </div>
 
-                {/* Row 2 - scrolling RIGHT */}
                 <div className="overflow-hidden">
                   <motion.div
                     className="flex gap-4 sm:gap-5 whitespace-nowrap"
@@ -770,9 +822,7 @@ export default function InstitutePublicWebsite() {
                         Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
                           ? settings.testimonials
                           : DEFAULT_TESTIMONIALS
-
                       const repeated = Array(7).fill(testimonials).flat()
-
                       return repeated.map((t, i) => (
                         <div
                           key={`row2-${i}`}
@@ -790,7 +840,6 @@ export default function InstitutePublicWebsite() {
                                 {t.name?.charAt(0) || "?"}
                               </div>
                             )}
-
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
                                 {t.name}
@@ -813,7 +862,6 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* CONTACT */}
         {settings.visibility?.contact !== false && (
           <section id="contact" style={sectionPadding} className="bg-gradient-to-b from-zinc-50 to-white">
             <div className="max-w-7xl mx-auto px-6">
@@ -828,7 +876,6 @@ export default function InstitutePublicWebsite() {
                       Confused about stream, course or career path? Talk to our counsellor today.
                     </p>
                   </div>
-
                   <div className="space-y-6">
                     <ContactCard icon={<Phone className="w-6 h-6" />} label="Helpline" value={publicContact.phone} />
                     <ContactCard icon={<Mail className="w-6 h-6" />} label="Email" value={publicContact.email} />
@@ -920,10 +967,8 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-        {/* FOOTER */}
         <footer className="bg-zinc-950 text-white pt-20 pb-12 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
-
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
               <div className="space-y-6">
@@ -933,7 +978,7 @@ export default function InstitutePublicWebsite() {
                   <h3 className="text-2xl font-black">EduFuture Academy</h3>
                 )}
                 <p className="text-zinc-400 text-sm">
-                  Premier institute for JEE | NEET | Boards & Foundation since 2009
+                  Premier institute for competitive exams since 2009
                 </p>
                 <div className="flex gap-4">
                   <SocialBtn href={settings.social?.facebook || "#"} icon={Facebook} />
@@ -990,7 +1035,6 @@ export default function InstitutePublicWebsite() {
           </div>
         </footer>
 
-        {/* ENQUIRY MODAL */}
         <Dialog open={isApplyModalOpen} onOpenChange={setIsApplyModalOpen}>
           <DialogContent className="max-w-lg rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
             <div className="bg-gradient-to-br from-primary to-purple-600 p-10 text-white relative">
@@ -1089,21 +1133,18 @@ export default function InstitutePublicWebsite() {
   )
 }
 
-// ─── HELPER COMPONENTS ───────────────────────────────────────────────
-
 function VarietySlider({ slides, height }: { slides: any[]; height: number }) {
   const [emblaRef] = useEmblaCarousel({ loop: true })
   const images = slides?.length > 0 ? slides : DEFAULT_HERO.slides
-
   return (
     <div className="overflow-hidden rounded-3xl shadow-2xl" style={{ height, width: '100%' }} ref={emblaRef}>
       <div className="flex h-full">
         {images.map((s, i) => (
           <div key={i} className="flex-[0_0_100%] min-w-0 h-full relative">
-            <img 
-              src={s.imageUrl} 
-              className="w-full h-full object-cover" 
-              alt="Institute atmosphere" 
+            <img
+              src={s.imageUrl}
+              className="w-full h-full object-cover"
+              alt="Lorem Ipsum Slide"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>
@@ -1117,7 +1158,6 @@ function DetailedCourseCard({ course }: { course: any }) {
   const discount = course.originalPrice && course.sellingPrice
     ? Math.round(((course.originalPrice - course.sellingPrice) / course.originalPrice) * 100)
     : 0
-
   return (
     <Card className="border-2 border-zinc-200 rounded-2xl overflow-hidden group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 flex flex-col h-full">
       <div className="h-56 relative overflow-hidden">
@@ -1184,13 +1224,10 @@ function AnimatedCounter({ value, duration = 2 }: { value: number; duration?: nu
   const rounded = useTransform(count, latest => Math.round(latest))
   const ref = useRef(null)
   const inView = useInView(ref, { once: true })
-
   useEffect(() => {
     if (inView) {
       animate(count, value, { duration })
     }
   }, [value, inView, count])
-
   return <motion.span ref={ref}>{rounded}</motion.span>
 }
-
