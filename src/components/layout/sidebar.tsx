@@ -40,7 +40,8 @@ import {
   Package,
   Megaphone,
   TrendingUp,
-  Store
+  Store,
+  MessageSquareShare
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -74,7 +75,7 @@ interface MenuItem {
   subItems?: SubItem[]
 }
 
-const sidebarMenu: MenuItem[] = [
+export const sidebarMenu: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/', icon: LayoutGrid, color: "text-blue-500" },
   { 
     id: 'website_mgmt', 
@@ -114,6 +115,7 @@ const sidebarMenu: MenuItem[] = [
       { id: 'visitor_books', nameKey: 'visitor_books', href: '/front-office/visitor-books', icon: UserCheck, color: "text-amber-500" },
       { id: 'phone_calls_logs', nameKey: 'phone_calls_logs', href: '/front-office/phone-calls-logs', icon: Clock, color: "text-amber-500" },
       { id: 'complains', nameKey: 'complains', href: '/front-office/complains', icon: AlertCircle, color: "text-amber-500" },
+      { id: 'concerns', nameKey: 'concerns', href: '/front-office/concerns', icon: MessageSquareShare, color: "text-amber-500" },
       { id: 'postal_service', nameKey: 'postal_service', href: '/front-office/postal-service', icon: Mail, color: "text-amber-500" },
     ]
   },
@@ -188,8 +190,6 @@ export function Sidebar() {
   const [profile, setProfile] = useState<any>(null)
   const [moduleAccess, setModuleAccess] = useState<Record<string, any>>({})
   const [isLoading, setIsLoading] = useState(true)
-  
-  // Real-time Counts
   const [counts, setCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -205,7 +205,6 @@ export function Sidebar() {
       setIsLoading(false)
     })
 
-    // Real-time count listeners
     const collectionsToCount = [
       { key: 'student_admission', path: 'admissions' },
       { key: 'employee_directory', path: 'employees' },
@@ -216,7 +215,8 @@ export function Sidebar() {
       { key: 'admission_enquiry', path: 'enquiries' },
       { key: 'visitor_books', path: 'visitors' },
       { key: 'phone_calls_logs', path: 'call-logs' },
-      { key: 'complains', path: 'complains' }
+      { key: 'complains', path: 'complains' },
+      { key: 'concerns', path: 'concerns' }
     ]
 
     collectionsToCount.forEach(({ key, path }) => {
@@ -237,13 +237,12 @@ export function Sidebar() {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
   }
 
+  const settings = profile || { capitalizeTitles: false, showItemCounts: false }
+
   const transformTitle = (title: string) => {
     if (!settings.capitalizeTitles) return title
     return title.split(' ').map(capitalize).join(' ')
   }
-
-  // Settings lookup
-  const settings = profile || { capitalizeTitles: false, showItemCounts: false }
 
   const filteredMenu = useMemo(() => {
     return sidebarMenu.filter(item => {
@@ -278,15 +277,9 @@ export function Sidebar() {
     <div className="hidden lg:flex lg:flex-col lg:w-[300px] lg:fixed lg:inset-y-0 bg-white z-50 font-public-sans border-r border-zinc-100 shadow-sm">
       <div className="h-20 flex items-center justify-center px-8 border-b border-zinc-50">
         {profile?.logoUrl ? (
-         <div className="relative w-full h-28">
-  <Image 
-    src={profile.logoUrl} 
-    alt="Logo" 
-    fill 
-    className="object-contain" 
-    priority 
-  />
-</div>
+          <div className="relative w-full h-12">
+            <Image src={profile.logoUrl} alt="Logo" fill className="object-contain" priority />
+          </div>
         ) : (
           <div className="flex items-center gap-3 overflow-hidden w-full">
             <div className="w-10 h-10 min-w-[40px] bg-zinc-50 rounded-xl flex items-center justify-center text-primary shadow-inner font-bold text-lg">

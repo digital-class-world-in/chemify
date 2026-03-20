@@ -24,7 +24,8 @@ import {
   Video,
   Settings,
   ShieldCheck,
-  Library
+  Library,
+  MessageSquareShare
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -52,7 +53,7 @@ interface MenuItem {
   color?: string
 }
 
-const studentMenu: MenuItem[] = [
+export const studentMenu: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/student/dashboard', icon: LayoutDashboard, color: "text-blue-500" },
   { id: 'profile', nameKey: 'student_admission', href: '/student/profile', icon: User, color: "text-indigo-500" },
   { id: 'batch', nameKey: 'batch_management', href: '/student/batch', icon: Layers, color: "text-purple-500" },
@@ -77,6 +78,7 @@ const studentMenu: MenuItem[] = [
   { id: 'announcement', nameKey: 'announcement', href: '/student/announcements', icon: Megaphone, color: "text-pink-500" },
   { id: 'events', nameKey: 'announcement', href: '/student/events', icon: Star, color: "text-amber-500" },
   { id: 'documents', nameKey: 'document_management', href: '/student/documents', icon: FolderOpen, color: "text-amber-600" },
+  { id: 'concerns', nameKey: 'concerns', href: '/student/concerns', icon: MessageSquareShare, color: "text-indigo-500" },
   { id: 'feedback', nameKey: 'complains', href: '/student/feedback', icon: MessageSquare, color: "text-zinc-500" },
   { id: 'notifications', nameKey: 'notification', href: '/student/notifications', icon: Bell, color: "text-amber-500" },
   { id: 'settings', nameKey: 'system_setting', href: '/student/settings', icon: Settings, color: "text-zinc-400" },
@@ -104,7 +106,6 @@ export function StudentSidebar() {
     const adminId = session.adminUid
     const studentId = session.studentId
 
-    // Fetch Institute Profile for Branding & Settings
     onValue(ref(database, `Institutes/${adminId}/profile`), (snapshot) => {
       const data = snapshot.val()
       if (data) {
@@ -114,7 +115,6 @@ export function StudentSidebar() {
       setIsLoading(false)
     }, { onlyOnce: true })
 
-    // Real-time count listeners for student portal
     const collectionsToCount = [
       { key: 'live_classes', path: `live-classes` },
       { key: 'announcement', path: `announcements` },
@@ -250,10 +250,10 @@ export function StudentSidebar() {
                 onClick={item.id === 'logout' ? handleLogout : () => router.push(item.href || '#')} 
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[15px] font-normal transition-all group", 
-                  isActive ? activeStyle : item.color ? item.color : "text-black hover:bg-zinc-50"
+                  isActive ? activeStyle : item.id === 'logout' ? "text-rose-500" : "text-black hover:bg-zinc-50"
                 )}
               >
-                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-black" : item.color ? item.color : "text-zinc-400 group-hover:text-zinc-500")} />
+                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-black" : item.id === 'logout' ? "text-rose-500" : (item.color || "text-zinc-400 group-hover:text-zinc-500"))} />
                 <span className="flex-1 text-left text-black font-medium whitespace-nowrap">{transformTitle(t(item.nameKey))}</span>
                 {settings.showItemCounts && mainCount !== undefined && (
                   <Badge variant="secondary" className="ml-2 bg-zinc-50 text-zinc-400 border-none text-[9px] font-black">{mainCount}</Badge>

@@ -149,7 +149,7 @@ export default function DashboardPage() {
       if (snapshot.exists()) {
         const data = snapshot.val()
         setProfile(data)
-        setInstituteName(data.instituteName || "Your Institute")
+        setInstituteName(data.instituteName || "")
         
         if (data.plan_selected === false || data.plan_selected === undefined) {
           setShowPlanPopup(true)

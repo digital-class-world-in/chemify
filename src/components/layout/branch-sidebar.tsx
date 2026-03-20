@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
@@ -69,7 +70,7 @@ interface MenuItem {
   subItems?: SubItem[]
 }
 
-const branchMenu: MenuItem[] = [
+export const branchMenu: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/branch/dashboard', icon: LayoutDashboard, color: "text-blue-500" },
   { 
     id: 'website_mgmt', 
@@ -190,21 +191,14 @@ export function BranchSidebar() {
 
   const filteredMenu = useMemo(() => {
     let list = branchMenu.filter(item => {
-      // Dashboard and Logout are always allowed
       if (item.id === 'dashboard' || item.id === 'logout') return true
-      
-      // Check if parent module is enabled
       const isParentEnabled = moduleAccess[item.id] === true
-      
-      // For items with subItems, check if any of those specific IDs are enabled
       if (item.subItems) {
         const hasAllowedSubItem = item.subItems.some(sub => moduleAccess[sub.id] === true)
         return isParentEnabled || hasAllowedSubItem
       }
-      
       return isParentEnabled
     }).map(item => {
-      // If parent is enabled, show all its subItems that are also enabled
       if (item.subItems) {
         return {
           ...item,
@@ -213,7 +207,6 @@ export function BranchSidebar() {
       }
       return item
     }).filter(item => {
-      // Final sanity check: if it's a parent with subItems, it must have at least one allowed subItem OR have a direct href
       if (item.subItems && item.subItems.length === 0 && !item.href) return false
       return true
     })

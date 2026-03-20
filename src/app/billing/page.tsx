@@ -89,7 +89,7 @@ export default function BillingPage() {
               onClick={() => setIsUpgradeModalOpen(true)}
               className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-8 font-black text-xs uppercase tracking-widest gap-2 border-none transition-all shadow-lg active:scale-95"
             >
-              <Sparkles className="h-4 w-4" /> Upgrade Plan
+              <Sparkles className="h-4 w-4" />Renew Plan
             </Button>
           </div>
 
