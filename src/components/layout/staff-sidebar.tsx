@@ -75,7 +75,7 @@ interface MenuItem {
   subItems?: SubItem[]
 }
 
-export const staffMenuConfig: MenuItem[] = [
+const staffMenuConfig: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/staff/dashboard', icon: LayoutGrid, color: "text-blue-500" },
   { id: 'leave_request_hr', nameKey: 'leave_request', href: '/staff/leave', icon: CalendarDays, color: "text-rose-500" },
   { 
@@ -170,6 +170,7 @@ export function StaffSidebar() {
   const [searchQuery, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   
+  // Real-time Counts
   const [counts, setCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -195,6 +196,7 @@ export function StaffSidebar() {
       setIsLoading(false)
     })
 
+    // Real-time count listeners
     const collectionsToCount = [
       { key: 'student_admission', path: 'admissions' },
       { key: 'employee_directory', path: 'employees' },
@@ -344,7 +346,7 @@ export function StaffSidebar() {
                             pathname === sub.href.split('?')[0] ? "text-black font-bold bg-primary/5" : "text-black hover:text-black hover:font-bold"
                           )}
                         >
-                          <span className="whitespace-nowrap">{transformTitle(t(sub.nameKey))}</span>
+                          <span className="flex-1 whitespace-nowrap">{transformTitle(t(sub.nameKey))}</span>
                           {settings.showItemCounts && subCount !== undefined && (
                             <Badge variant="secondary" className="ml-2 bg-zinc-50 text-zinc-400 border-none text-[9px] font-black">{subCount}</Badge>
                           )}

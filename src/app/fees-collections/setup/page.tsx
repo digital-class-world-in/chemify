@@ -151,17 +151,7 @@ function FeeSetupContent() {
                   </div>
                 </div>
                 <div className="p-8 space-y-8">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Target Student</Label>
-                    <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                      <SelectTrigger className="h-12 rounded-xl border-zinc-200 bg-zinc-50/50 font-bold text-zinc-800">
-                        <SelectValue placeholder="Select student..." />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-zinc-100 shadow-2xl">
-                        {students.map(s => <SelectItem key={s.id} value={s.id} className="font-bold uppercase text-[11px]">{s.studentName} ({s.admissionNo})</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                 
 
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Total Academic Fee (₹)</Label>
