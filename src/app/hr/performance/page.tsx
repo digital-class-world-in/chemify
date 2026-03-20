@@ -25,8 +25,7 @@ import {
   Trophy,
   Activity,
   UserCheck,
-  History,
-  ShieldCheck
+  History
 } from "lucide-react"
 import { useFirebase, useUser } from "@/firebase"
 import { ref, onValue, off, push, set, remove, update } from "firebase/database"
