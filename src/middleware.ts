@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  
   // Skip static files, API, Next.js internals
   if (
     pathname.startsWith('/_next') ||
