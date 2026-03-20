@@ -99,7 +99,7 @@ export default function WebsiteManagementPage() {
   const { database } = useFirebase()
 
   // ─── FIXED INSTITUTE ID (this is what you wanted) ───────────────
-  const id = "DLTr4nGsqOcmEuUi8SbHm2JMsmD2"
+  const id = "JzZYbd6RobXVEn42uupTklHW1sn1"
 
   const [activeTab, setActiveTab] = useState("homepage")
   const [isLoading, setIsLoading] = useState(true)

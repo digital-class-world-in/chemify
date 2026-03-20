@@ -116,6 +116,8 @@ export function TopNav() {
     }
   }
 
+
+   
   // Show Upgrade button ONLY if on Trial or No Plan
   const showUpgrade = useMemo(() => {
     if (!profile) return true

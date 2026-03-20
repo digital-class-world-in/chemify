@@ -80,7 +80,7 @@ const fadeIn = {
   transition: { duration: 0.8, ease: "easeOut" }
 }
 
-// ─── DEFAULT / FALLBACK DATA ── Dummy lorem ipsum style ─────
+// ─── DEFAULT / FALLBACK DATA (shown only if admin has NOT filled anything) ──
 const DEFAULT_HERO = {
   title: "Lorem Ipsum Dolor Sit Amet",
   description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
@@ -315,7 +315,7 @@ export default function InstitutePublicWebsite() {
     }
   }
 
-  if (isLoading || !settings) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
@@ -326,25 +326,48 @@ export default function InstitutePublicWebsite() {
     )
   }
 
-  const sectionPadding = {
-    paddingTop: `${settings.styling?.sectionSpacing ?? 120}px`,
-    paddingBottom: `${settings.styling?.sectionSpacing ?? 120}px`
-  }
+  // ──────────────────────────────────────────────────────────────
+  // Smart fallback: Use admin data if filled, else use dummy
+  // ──────────────────────────────────────────────────────────────
 
-  const displayedHero = {
+  // Hero: only use default if title/description/slides are empty
+  const heroIsEmpty = !settings?.hero?.title?.trim() && 
+                      !settings?.hero?.description?.trim() && 
+                      (!settings?.hero?.slides || settings.hero.slides.length === 0)
+
+  const displayedHero = heroIsEmpty ? DEFAULT_HERO : {
     ...DEFAULT_HERO,
     ...(settings.hero || {})
   }
 
-  const displayedAbout = {
+  // About: only default if title or descriptions are empty
+  const aboutIsEmpty = !settings?.about?.title?.trim() && 
+                       !settings?.about?.description1?.trim() && 
+                       !settings?.about?.description2?.trim()
+
+  const displayedAbout = aboutIsEmpty ? DEFAULT_ABOUT : {
     ...DEFAULT_ABOUT,
     ...(settings.about || {})
   }
 
-  const displayedStats = settings.stats?.length > 0 ? settings.stats : DEFAULT_STATS
+  // Stats: only default if no stats added by admin
+  const displayedStats = (settings.stats && settings.stats.length > 0) 
+    ? settings.stats 
+    : DEFAULT_STATS
+
+  // Testimonials: only default if admin has not added any
+  const displayedTestimonials = (settings.testimonials && settings.testimonials.length > 0) 
+    ? settings.testimonials 
+    : DEFAULT_TESTIMONIALS
+
+  // Courses & Blogs: use real data if exists, else dummy
   const displayedCourses = courses.length > 0 ? courses : DEFAULT_COURSES
   const displayedBlogs = blogs.length > 0 ? blogs : DEFAULT_BLOGS
-  const displayedTestimonials = settings.testimonials?.length > 0 ? settings.testimonials : DEFAULT_TESTIMONIALS
+
+  const sectionPadding = {
+    paddingTop: `${settings.styling?.sectionSpacing ?? 120}px`,
+    paddingBottom: `${settings.styling?.sectionSpacing ?? 120}px`
+  }
 
   const publicContact = {
     phone: profile?.contactPhone || profile?.phone || settings.contact?.phone || "+91 98765 43210",
@@ -507,70 +530,67 @@ export default function InstitutePublicWebsite() {
           </section>
         )}
 
-       {settings.visibility?.courses !== false ? (
-  <section
-    id="courses"
-    style={sectionPadding}
-    className="bg-zinc-100 -mt-16 lg:-mt-2"
-  >
-    <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
-      
-      <div className="text-center space-y-2">
-        <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
-          Our Flagship Programs
-        </h2>
-        <p className="text-zinc-600 max-w-3xl mx-auto">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit.
-        </p>
-      </div>
+        {settings.visibility?.courses !== false ? (
+          <section
+            id="courses"
+            style={sectionPadding}
+            className="bg-zinc-100 -mt-16 lg:-mt-2"
+          >
+            <div className="max-w-7xl mx-auto px-5 sm:px-6 space-y-6 lg:space-y-8">
+              <div className="text-center space-y-2">
+                <h2 className="text-4xl lg:text-5xl font-black text-zinc-900 uppercase tracking-tight">
+                  Our Flagship Programs
+                </h2>
+                <p className="text-zinc-600 max-w-3xl mx-auto">
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                </p>
+              </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-7">
+                {(displayedCourses?.filter(c => c.showOnHomepage !== false)?.length > 0
+                  ? displayedCourses
+                      .filter(c => c.showOnHomepage !== false)
+                      .map((course, i) => (
+                        <motion.div
+                          key={course.id}
+                          {...fadeIn}
+                          transition={{ delay: i * 0.06 }}
+                        >
+                          <Link
+                            href={`/course-preview/${course.id}`}
+                            className="block h-full group"
+                          >
+                            <DetailedCourseCard course={course} />
+                          </Link>
+                        </motion.div>
+                      ))
+                  : [1, 2, 3].map((_, i) => {
+                      const dummyCourse = {
+                        id: `dummy-${i}`,
+                        title: "Sample Course",
+                        description: "This is a demo course description",
+                        image: "/default-course.jpg",
+                      }
 
-        {(displayedCourses?.filter(c => c.showOnHomepage !== false)?.length > 0
-          ? displayedCourses
-              .filter(c => c.showOnHomepage !== false)
-              .map((course, i) => (
-                <motion.div
-                  key={course.id}
-                  {...fadeIn}
-                  transition={{ delay: i * 0.06 }}
-                >
-                  <Link
-                    href={`/course-preview/${course.id}`}
-                    className="block h-full group"
-                  >
-                    <DetailedCourseCard course={course} />
-                  </Link>
-                </motion.div>
-              ))
-          : [1, 2, 3].map((_, i) => {
-              const dummyCourse = {
-                id: `dummy-${i}`,
-                title: "Sample Course",
-                description: "This is a demo course description",
-                image: "/default-course.jpg",
-              };
-
-              return (
-                <motion.div
-                  key={dummyCourse.id}
-                  {...fadeIn}
-                  transition={{ delay: i * 0.06 }}
-                >
-                  <Link
-                    href={`/course-preview/${dummyCourse.id}`}
-                    className="block h-full group"
-                  >
-                    <DetailedCourseCard course={dummyCourse} />
-                  </Link>
-                </motion.div>
-              );
-            }))}
-
-      </div>
-    </div>
-  </section>
-) : null}
+                      return (
+                        <motion.div
+                          key={dummyCourse.id}
+                          {...fadeIn}
+                          transition={{ delay: i * 0.06 }}
+                        >
+                          <Link
+                            href={`/course-preview/${dummyCourse.id}`}
+                            className="block h-full group"
+                          >
+                            <DetailedCourseCard course={dummyCourse} />
+                          </Link>
+                        </motion.div>
+                      )
+                    }))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {settings.visibility?.stats !== false && (
           <section className="bg-white border-y border-zinc-100 py-16 overflow-hidden">
@@ -616,7 +636,7 @@ export default function InstitutePublicWebsite() {
               <motion.div {...fadeIn} className="relative group lg:sticky lg:top-32">
                 <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-8 border-zinc-100">
                   <img
-                    src={displayedAbout.imageUrl || "https://placehold.co/800x1000/10b981/ffffff/png?text=About+Us+Placeholder"}
+                    src={displayedAbout.imageUrl}
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                     alt="About Us Image"
                   />
@@ -626,16 +646,16 @@ export default function InstitutePublicWebsite() {
               <motion.div {...fadeIn} transition={{ delay: 0.3 }} className="space-y-8">
                 <div className="space-y-4">
                   <Badge className="bg-primary/10 text-primary border-none uppercase font-black text-[10px] px-4 tracking-widest rounded-full">
-                    {displayedAbout.badge || "About Us"}
+                    {displayedAbout.badge}
                   </Badge>
                   <h2 className="text-4xl lg:text-6xl font-black text-zinc-900 uppercase tracking-tight leading-[0.9]">
-                    {displayedAbout.title || "Lorem Ipsum About Us Title"}
+                    {displayedAbout.title}
                   </h2>
                 </div>
 
                 <div className="space-y-6 text-zinc-600 text-lg leading-relaxed">
-                  <p>{displayedAbout.description1 || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."}</p>
-                  <p>{displayedAbout.description2 || "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."}</p>
+                  <p>{displayedAbout.description1}</p>
+                  <p>{displayedAbout.description2}</p>
 
                   <div className="mt-10">
                     <h4 className="text-2xl md:text-3xl font-black text-zinc-900 mb-6 text-center lg:text-left flex items-center justify-center lg:justify-start gap-3">
@@ -643,32 +663,32 @@ export default function InstitutePublicWebsite() {
                     </h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-  <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-    <div className="flex items-start gap-4">
-      <div className="flex-shrink-0 mt-1">
-        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
-          ✓
-        </div>
-      </div>
-      <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
-        Learn accounting, GST billing, and business management using industry-standard software.
-      </p>
-    </div>
-  </div>
+                      <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 mt-1">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+                              ✓
+                            </div>
+                          </div>
+                          <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
+                            Learn accounting, GST billing, and business management using industry-standard software.
+                          </p>
+                        </div>
+                      </div>
 
-  <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-    <div className="flex items-start gap-4">
-      <div className="flex-shrink-0 mt-1">
-        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
-          ✓
-        </div>
-      </div>
-      <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
-        Master Word, Excel, PowerPoint, and practical office tools for real-world productivity.
-      </p>
-    </div>
-  </div>
-</div>
+                      <div className="bg-white border border-primary/20 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 mt-1">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+                              ✓
+                            </div>
+                          </div>
+                          <p className="text-zinc-800 font-[Poppins,sans-serif] text-[16px] leading-relaxed">
+                            Master Word, Excel, PowerPoint, and practical office tools for real-world productivity.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -766,44 +786,37 @@ export default function InstitutePublicWebsite() {
                       repeat: Infinity,
                     }}
                   >
-                    {(() => {
-                      const testimonials =
-                        Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
-                          ? settings.testimonials
-                          : DEFAULT_TESTIMONIALS
-                      const repeated = Array(7).fill(testimonials).flat()
-                      return repeated.map((t, i) => (
-                        <div
-                          key={i}
-                          className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
-                        >
-                          <div className="flex items-start gap-3.5">
-                            {t.image ? (
-                              <img
-                                src={t.image}
-                                alt={t.name}
-                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
-                                {t.name?.charAt(0) || "?"}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
-                                {t.name}
-                              </p>
-                              <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
-                                {t.role || "STUDENT"}
-                              </p>
-                              <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
-                                {t.message}
-                              </p>
+                    {displayedTestimonials.map((t: any, i: number) => (
+                      <div
+                        key={i}
+                        className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
+                      >
+                        <div className="flex items-start gap-3.5">
+                          {t.image ? (
+                            <img
+                              src={t.image}
+                              alt={t.name}
+                              className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
+                              {t.name?.charAt(0) || "?"}
                             </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
+                              {t.name}
+                            </p>
+                            <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
+                              {t.role || "STUDENT"}
+                            </p>
+                            <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
+                              {t.message}
+                            </p>
                           </div>
                         </div>
-                      ))
-                    })()}
+                      </div>
+                    ))}
                   </motion.div>
                 </div>
 
@@ -817,44 +830,37 @@ export default function InstitutePublicWebsite() {
                       repeat: Infinity,
                     }}
                   >
-                    {(() => {
-                      const testimonials =
-                        Array.isArray(settings?.testimonials) && settings.testimonials.length > 0
-                          ? settings.testimonials
-                          : DEFAULT_TESTIMONIALS
-                      const repeated = Array(7).fill(testimonials).flat()
-                      return repeated.map((t, i) => (
-                        <div
-                          key={`row2-${i}`}
-                          className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
-                        >
-                          <div className="flex items-start gap-3.5">
-                            {t.image ? (
-                              <img
-                                src={t.image}
-                                alt={t.name}
-                                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
-                                {t.name?.charAt(0) || "?"}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
-                                {t.name}
-                              </p>
-                              <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
-                                {t.role || "STUDENT"}
-                              </p>
-                              <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
-                                {t.message}
-                              </p>
+                    {displayedTestimonials.map((t: any, i: number) => (
+                      <div
+                        key={`row2-${i}`}
+                        className="w-[300px] sm:w-[340px] lg:w-[360px] flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-5 shadow-sm"
+                      >
+                        <div className="flex items-start gap-3.5">
+                          {t.image ? (
+                            <img
+                              src={t.image}
+                              alt={t.name}
+                              className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-semibold text-xl flex-shrink-0">
+                              {t.name?.charAt(0) || "?"}
                             </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-zinc-900 text-base sm:text-lg leading-tight uppercase tracking-wide truncate">
+                              {t.name}
+                            </p>
+                            <p className="text-xs sm:text-sm text-zinc-500 font-medium uppercase mt-0.5">
+                              {t.role || "STUDENT"}
+                            </p>
+                            <p className="mt-3 text-sm sm:text-[15px] text-zinc-600 leading-relaxed line-clamp-3">
+                              {t.message}
+                            </p>
                           </div>
                         </div>
-                      ))
-                    })()}
+                      </div>
+                    ))}
                   </motion.div>
                 </div>
               </div>
