@@ -57,7 +57,6 @@ import {
   Megaphone,
   Award,
   BellRing,
-  CreditCard,
   Settings,
   CalendarDays,
   Database,
@@ -202,6 +201,8 @@ export default function BranchManagementPage() {
     return () => off(dbRef)
   }, [database, user])
 
+  const canAddBranch = branches.length < 1
+
   const filteredBranches = useMemo(() => {
     if (!searchTerm) return branches
     const lowerSearch = searchTerm.toLowerCase()
@@ -248,12 +249,16 @@ export default function BranchManagementPage() {
           toast({ variant: "destructive", title: "Update Failed" })
         })
     } else {
+      if (!canAddBranch) {
+        toast({ variant: "destructive", title: "Limit Reached", description: "You can only create one branch node." })
+        return
+      }
+
       const newRef = push(ref(database, `Institutes/${user.uid}/branches`))
       const initialPermissions: Record<string, boolean> = {
         dashboard: true // ONLY DASHBOARD ON BY DEFAULT
       }
       
-      // ALL OTHER MODULES DEFAULT TO OFF
       PERMISSION_GROUPS.forEach(group => {
         group.modules.forEach(m => {
           if (m.id !== 'dashboard') {
@@ -325,8 +330,11 @@ export default function BranchManagementPage() {
             </div>
 
             <Button
-              onClick={() => { setSelectedBranch(null); setIsModalOpen(true); }}
-              className="bg-primary hover:bg-primary/90 text-white rounded-xl h-11 px-6 font-bold text-sm gap-2 shadow-lg active:scale-95 transition-all"
+              onClick={() => { if(canAddBranch) { setSelectedBranch(null); setIsModalOpen(true); } else { toast({ variant: "destructive", title: "Limit Reached", description: "Standard plan allows only 1 branch node." }) } }}
+              className={cn(
+                "rounded-xl h-11 px-6 font-bold text-sm gap-2 shadow-lg active:scale-95 transition-all",
+                canAddBranch ? "bg-primary hover:bg-primary/90 text-white" : "bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed"
+              )}
             >
               <Plus className="h-4 w-4" /> Add New Branch
             </Button>
@@ -352,7 +360,7 @@ export default function BranchManagementPage() {
                     <TableHead className="text-[11px] font-black text-black uppercase tracking-widest h-14">Portal Credentials</TableHead>
                     <TableHead className="text-[11px] font-black text-black uppercase tracking-widest h-14">Code</TableHead>
                     <TableHead className="text-[11px] font-black text-black uppercase tracking-widest h-14">Manager</TableHead>
-                    <TableHead className="text-right pr-8 text-[11px] font-black text-black uppercase tracking-widest h-14">Actions</TableHead>
+                    <TableHead className="text-right pr-8 text-[11px] font-black text-black uppercase h-14">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -676,35 +684,6 @@ export default function BranchManagementPage() {
 
         </main>
       </div>
-    </div>
-  )
-}
-
-function MultiCriteriaBox({ label, selected, onToggle, options }: { label: string, selected: string[], onToggle: (v: string) => void, options: any[] }) {
-  return (
-    <div className="space-y-2">
-      <Label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <button className="w-full h-11 px-4 rounded-2xl border border-zinc-100 bg-white flex items-center justify-between text-xs font-bold text-zinc-600 shadow-sm group hover:border-primary transition-all">
-            <span className="truncate">{selected.length > 0 ? `${selected.length} Selected` : "Provision Selection"}</span>
-            <Filter className="w-3.5 h-3.5 text-zinc-300 group-hover:text-primary" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-64 p-0 rounded-[24px] overflow-hidden border-zinc-100 shadow-2xl">
-          <div className="bg-zinc-50 p-4 border-b border-zinc-100"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Multi-Node Select</p></div>
-          <ScrollArea className="h-64">
-            <div className="p-2 space-y-1">
-              {options.map(opt => (
-                <div key={opt.id} onClick={() => onToggle(opt.value)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors group">
-                  <Checkbox checked={selected.includes(opt.value)} onCheckedChange={() => onToggle(opt.value)} className="data-[state=checked]:bg-primary" />
-                  <span className="text-xs font-bold text-zinc-600 uppercase group-hover:text-zinc-900">{opt.value}</span>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
     </div>
   )
 }
