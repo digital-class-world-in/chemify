@@ -383,9 +383,7 @@ const [courseNotFound, setCourseNotFound] = useState(false)
                       <h3 className="text-xl font-black text-zinc-800 uppercase tracking-tight flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-primary" /> {course.outcomeHeading || "What you'll achieve"}
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       
-                      </div>
+                     
                     </div>
                   </TabsContent>
 

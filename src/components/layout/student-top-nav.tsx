@@ -184,7 +184,7 @@ export function StudentTopNav() {
             </SheetHeader>
             <ScrollArea className="h-[calc(100vh-80px)] p-4">
               <nav className="space-y-1 pb-20">
-                {menuItems.map((item) => {
+                {menuItems.map((item: { icon: any; subItems: any[]; id: string | number | bigint | ((prevState: string | null) => string | null) | null | undefined; color: any; nameKey: string; href: any }) => {
                   const Icon = item.icon;
                   const hasSubItems = item.subItems && item.subItems.length > 0;
                   const isOpen = openMenu === item.id;
