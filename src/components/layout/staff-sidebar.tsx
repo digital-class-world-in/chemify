@@ -75,7 +75,7 @@ interface MenuItem {
   subItems?: SubItem[]
 }
 
-const staffMenuConfig: MenuItem[] = [
+export const staffMenuConfig: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/staff/dashboard', icon: LayoutGrid, color: "text-blue-500" },
   { id: 'leave_request_hr', nameKey: 'leave_request', href: '/staff/leave', icon: CalendarDays, color: "text-rose-500" },
   { 
@@ -382,3 +382,5 @@ export function StaffSidebar() {
     </div>
   )
 }
+export { staffMenuConfig }
+

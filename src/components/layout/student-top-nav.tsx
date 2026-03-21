@@ -151,7 +151,7 @@ export function StudentTopNav() {
 
   const handleOpenWebsite = () => {
     const target = slug || adminUid
-    if (target) window.open(`/sites/${target}`, '_blank')
+    if (target) window.open(`/`, '_blank')
   }
 
   const menuItems = useMemo(() => {

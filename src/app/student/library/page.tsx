@@ -36,6 +36,7 @@ import { useFirebase, useUser } from "@/firebase"
 import { ref, onValue, off } from "firebase/database"
 import { cn } from "@/lib/utils"
 import { format, parseISO, isAfter } from "date-fns"
+import { Label } from "recharts"
 
 export default function StudentLibraryPage() {
   const { database } = useFirebase()
