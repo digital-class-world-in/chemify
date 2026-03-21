@@ -1,3 +1,4 @@
+ 
 "use client"
 
 import { useState, useEffect, use } from "react"
@@ -225,7 +226,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     <div className="min-h-screen bg-white overflow-x-hidden selection:bg-primary/20" style={{ fontFamily: settings?.styling?.fontFamily || 'Poppins' }}>
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md py-4 transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
+          <Link href={`/`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
               <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
             ) : (
@@ -480,7 +481,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         </div>
       </section>
 
-      {/* BUY NOW (PAYMENT) DIALOG */}
+      {/* 💳 BUY NOW (PAYMENT) DIALOG */}
       <Dialog open={isPayModalOpen} onOpenChange={setIsPayModalOpen}>
         <DialogContent className="max-w-[95vw] md:max-w-[600px] p-0 border-none rounded-[40px] overflow-hidden bg-white shadow-2xl focus:outline-none">
           <div className="bg-zinc-900 p-10 text-white relative">
@@ -718,4 +719,5 @@ function SocialBtn({ icon, href }: { icon: any, href: string }) {
       {icon}
     </a>
   )
-} 
+}
+ 
