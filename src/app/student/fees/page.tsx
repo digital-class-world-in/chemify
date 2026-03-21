@@ -1,536 +1,305 @@
+
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Suspense } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { 
-  UserCheck, 
-  CalendarDays, 
-  Clock, 
-  TrendingUp, 
+  Wallet, 
+  CreditCard, 
+  Calendar, 
   FileText, 
-  Printer, 
   Download, 
-  AlertCircle, 
+  Printer, 
   CheckCircle2, 
-  XCircle,
-  Calendar,
-  Filter,
-  Users,
-  Layers,
-  BookOpen,
-  PieChart as PieChartIcon,
-  BarChart3,
-  Info,
-  ChevronRight,
+  AlertCircle, 
+  X, 
+  Loader2, 
+  History, 
+  TrendingUp,
   ShieldCheck,
-  ClipboardList,
-  CalendarCheck,
-  Plus
+  Smartphone,
+  Landmark,
+  ChevronRight,
+  Info,
+  BookOpen
 } from "lucide-react"
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from "recharts"
 import { useFirebase, useUser } from "@/firebase"
-import { ref, onValue, off } from "firebase/database"
+import { ref, onValue, push, set, off, update, get } from "firebase/database"
 import { cn } from "@/lib/utils"
-import { format, parseISO, getMonth, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
+import { format } from "date-fns"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+import { toast } from "@/hooks/use-toast"
 
-const COLORS = ['#1e3a8a', '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-export default function StudentAttendancePage() {
+export default function StudentFeesPage() {
   const { database } = useFirebase()
   const { user } = useUser()
+  
   const [student, setStudent] = useState<any>(null)
-  const [attendanceData, setAttendanceData] = useState<any[]>([])
-  const [leaveRequests, setLeaveRequests] = useState<any[]>([])
+  const [adminUid, setAdminUid] = useState<string | null>(null)
+  const [payments, setPayments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("daily")
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState("upi")
+  const [instituteProfile, setInstituteProfile] = useState<any>(null)
 
   useEffect(() => {
     if (!database || !user) return
     
-    // Multi-tenant lookup for student context
+    // Resolve Student Identity
     const instRef = ref(database, `Institutes`)
     onValue(instRef, (snap) => {
       const institutes = snap.val() || {}
       let foundStudent = null
-      let adminUid = null
+      let foundAdmin = null
 
       Object.keys(institutes).forEach(id => {
         const adms = institutes[id].admissions || {}
         Object.keys(adms).forEach(aid => {
           if (adms[aid].email?.toLowerCase() === user.email?.toLowerCase()) {
             foundStudent = { ...adms[aid], id: aid }
-            adminUid = id
+            foundAdmin = id
           }
         })
       })
 
-      if (foundStudent && adminUid) {
+      if (foundStudent && foundAdmin) {
         setStudent(foundStudent)
-        const rootPath = `Institutes/${adminUid}`
+        setAdminUid(foundAdmin)
+        const rootPath = `Institutes/${foundAdmin}`
         
-        // Fetch Attendance
-        onValue(ref(database, `${rootPath}/attendance/Student`), (s) => {
-          const data = s.val() || {}
-          const logs: any[] = []
-          Object.keys(data).forEach(date => {
-            Object.keys(data[date]).forEach(batchId => {
-              if (data[date][batchId][foundStudent.id]) {
-                logs.push({
-                  date,
-                  ...data[date][batchId][foundStudent.id]
-                })
-              }
-            })
-          })
-          setAttendanceData(logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
+        onValue(ref(database, `${rootPath}/profile`), (s) => {
+          setInstituteProfile(s.val())
         })
 
-        // Fetch Leaves
-        onValue(ref(database, `${rootPath}/leave-requests`), (s) => {
+        onValue(ref(database, `${rootPath}/fees`), (s) => {
           const data = s.val() || {}
-          setLeaveRequests(Object.values(data).filter((l: any) => l.requesterId === foundStudent.id))
+          setPayments(Object.values(data).filter((p: any) => p.studentId === foundStudent.id).reverse())
         })
       }
       setIsLoading(false)
     })
   }, [database, user])
 
-  // Process Stats
-  const stats = useMemo(() => {
-    const total = attendanceData.length
-    const present = attendanceData.filter(a => a.status === 'Present').length
-    const absent = attendanceData.filter(a => a.status === 'Absent').length
-    const leave = attendanceData.filter(a => a.status === 'Leave').length
-    const late = attendanceData.filter(a => a.status === 'Late').length
-    const percent = total > 0 ? Math.round((present / total) * 100) : 0
+  const totals = useMemo(() => {
+    if (!student) return { total: 0, paid: 0, pending: 0, status: 'Pending' }
+    const total = Number(student.netFees) || 0
+    const paid = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+    const pending = Math.max(0, total - paid)
+    const status = pending === 0 ? 'Paid' : paid > 0 ? 'Partial' : 'Pending'
+    return { total, paid, pending, status }
+  }, [student, payments])
 
-    return { total, present, absent, leave, late, percent }
-  }, [attendanceData])
+  const breakdown = useMemo(() => {
+    if (!totals.total) return []
+    const base = totals.total
+    return [
+      { type: "Tuition Fee", total: Math.round(base * 0.7), paid: Math.round(totals.paid * 0.7), icon: <BookOpen className="w-4 h-4" /> },
+      { type: "Admission Fee", total: Math.round(base * 0.1), paid: Math.round(totals.paid * 0.1), icon: <ShieldCheck className="w-4 h-4" /> },
+      { type: "Examination Fee", total: Math.round(base * 0.1), paid: Math.round(totals.paid * 0.1), icon: <FileText className="w-4 h-4" /> },
+      { type: "Transport/Misc", total: Math.round(base * 0.1), paid: Math.round(totals.paid * 0.1), icon: <TrendingUp className="w-4 h-4" /> },
+    ]
+  }, [totals])
 
-  const statusBadge = useMemo(() => {
-    if (stats.percent >= 85) return { label: "Good", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: <CheckCircle2 className="w-3 h-3" /> }
-    if (stats.percent >= 75) return { label: "Warning", color: "bg-amber-50 text-amber-600 border-amber-100", icon: <AlertCircle className="w-3 h-3" /> }
-    return { label: "Critical", color: "bg-rose-50 text-rose-600 border-rose-100", icon: <XCircle className="w-3 h-3" /> }
-  }, [stats.percent])
+  const generatePremiumReceipt = (payment: any) => {
+    const doc = new jsPDF();
+    const dueAmount = totals.pending;
 
-  // Charts Data
-  const monthlyData = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const counts = months.map(m => ({ name: m, present: 0, absent: 0, leave: 0 }))
+    doc.setDrawColor(0).setLineWidth(0.5);
+    doc.rect(10, 10, 190, 277);
+    doc.setFontSize(10).setTextColor(100).setFont("helvetica", "normal").text("Office Copy", 105, 18, { align: 'center' });
+    doc.line(10, 22, 200, 22);
     
-    attendanceData.forEach(log => {
-      const mIdx = new Date(log.date).getMonth()
-      if (log.status === 'Present') counts[mIdx].present++
-      else if (log.status === 'Absent') counts[mIdx].absent++
-      else if (log.status === 'Leave') counts[mIdx].leave++
-    })
-    return counts.slice(0, new Date().getMonth() + 1)
-  }, [attendanceData])
+    doc.setFillColor(245, 245, 245);
+    doc.rect(10.5, 23, 189, 10, 'F');
+    doc.setFontSize(12).setTextColor(40).setFont("helvetica", "bold");
+    doc.text("Payment Receipt", 105, 29, { align: 'center' });
+    doc.line(10, 33, 200, 33);
 
-  const subjectData = [
-    { name: 'Mathematics', value: 88 },
-    { name: 'Physics', value: 92 },
-    { name: 'Chemistry', value: 70 },
-    { name: 'English', value: 95 },
-    { name: 'Biology', value: 82 }
-  ]
+    const instName = instituteProfile?.instituteName || "ACADEMIC INSTITUTE"
+    doc.setDrawColor(230).setFillColor(255, 255, 255);
+    doc.roundedRect(15, 38, 180, 45, 5, 5, 'FD');
+    doc.setFontSize(16).setTextColor(40).setFont("helvetica", "bold");
+    doc.text(instName.toUpperCase(), 105, 48, { align: 'center' });
+    doc.text("your logo", 105, 60, { align: 'center' });
 
-  if (isLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase tracking-[0.3em] animate-pulse">Initializing Data Stream...</div>
-  if (!student) return <div className="p-20 text-center text-zinc-400 font-bold">UNAUTHORIZED ACCESS</div>
+    doc.setFontSize(14).setTextColor(0).text("Issued to:", 15, 95);
+    doc.setFontSize(10).setTextColor(0).setFont("helvetica", "bold");
+    doc.text(`Name: ${student?.studentName || 'N/A'}`, 15, 105);
+    doc.text(`Roll no.: ${student?.rollNo || '-'}`, 15, 112);
+    doc.text(`Date: ${payment.date || '-'}`, 15, 119);
+    doc.text(`Email: ${student?.email || '-'}`, 110, 105);
+    doc.text(`Mob.: ${student?.mobile || '-'}`, 110, 112);
+    doc.text(`Receipt No.: #${payment.receiptNo || '-'}`, 110, 119);
+
+    autoTable(doc, {
+      startY: 125,
+      margin: { left: 15, right: 15 },
+      head: [['Course/Class', 'Transaction Id', 'Payment Type', 'Amount']],
+      body: [
+        [student?.course || '-', payment.txId || '-', 'Online/Portal', `INR ${Number(payment.amount).toLocaleString()}`],
+        ['', '', 'Transport Fee', `INR 0`],
+        ['', '', 'Other Amount', `INR 0`],
+        ['', '', 'Fine', `INR 0`]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.5, lineColor: [0, 0, 0] },
+      bodyStyles: { textColor: [0, 0, 0], halign: 'center', lineWidth: 0.5, lineColor: [0, 0, 0] },
+      columnStyles: { 3: { halign: 'right' } }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setDrawColor(0).setLineWidth(0.5);
+    doc.rect(15, finalY, 40, 12); doc.setFontSize(10).text("Due Total:", 17, finalY + 8); doc.text(`INR ${dueAmount.toLocaleString()}`, 35, finalY + 8);
+    doc.rect(145, finalY, 45, 12); doc.setFontSize(10).text("Total:", 147, finalY + 8); doc.setFont("helvetica", "bold").text(`INR ${Number(payment.amount).toLocaleString()}`, 165, finalY + 8);
+
+    doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(100);
+    doc.text(`Website: ${instituteProfile?.slug ? `https://partner.digitalclassworld.com/${instituteProfile.slug}` : '-'}`, 105, finalY + 30, { align: 'center' });
+    doc.text(`Address: ${instituteProfile?.address || '-'}`, 105, finalY + 37, { align: 'center' });
+    doc.setFont("helvetica", "bold").text("Note: Once a fee submitted can not be refunded.", 105, finalY + 44, { align: 'center' });
+    doc.setFont("helvetica", "normal").text("This is a computer-generated receipt and does not require a signature.", 105, finalY + 51, { align: 'center' });
+
+    doc.save(`Receipt_${payment.receiptNo}.pdf`);
+  }
+
+  const handlePayment = async () => {
+    if (!database || !adminUid || !student || isProcessing) return
+    setIsProcessing(true)
+    const amount = totals.pending
+    const receiptNo = `RCP-${Date.now().toString().slice(-6)}`
+    const txId = `TXN-${Math.random().toString(36).substring(2, 11).toUpperCase()}`
+    const paymentData = {
+      studentId: student.id,
+      studentName: student.studentName,
+      amount: amount,
+      fineAmount: 0,
+      otherAmount: 0,
+      date: format(new Date(), "yyyy-MM-dd"),
+      paymentMode: paymentMethod.toUpperCase(),
+      paymentOption: "Portal",
+      txId: txId,
+      receiptNo: receiptNo,
+      status: "Successful",
+      createdAt: Date.now()
+    }
+    try {
+      await push(ref(database, `Institutes/${adminUid}/fees`), paymentData)
+      await update(ref(database, `Institutes/${adminUid}/admissions/${student.id}`), { lastPaymentDate: new Date().toISOString() })
+      generatePremiumReceipt(paymentData)
+      toast({ title: "Payment Successful" })
+      setIsPayModalOpen(false)
+    } catch (e) {
+      toast({ variant: "destructive", title: "Failed" })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  if (isLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase animate-pulse">Establishing Node Connection...</div>
+  if (!student) return <div className="p-20 text-center text-zinc-400 font-bold uppercase tracking-widest">Enrollment record not found</div>
 
   return (
-    <main className="flex-1 p-8 space-y-10 animate-in fade-in duration-700 max-w-7xl mx-auto">
+    <main className="flex-1 p-8 space-y-10 animate-in fade-in duration-700 max-w-7xl mx-auto pb-32">
       
-      {/* 1️⃣ ATTENDANCE HEADER SECTION */}
       <Card className="border-none shadow-xl rounded-[40px] bg-white overflow-hidden p-10">
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-10">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="w-24 h-24 rounded-[32px] bg-indigo-50 flex items-center justify-center text-[#1e3a8a] shadow-inner">
-              <CalendarCheck className="w-12 h-12" />
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-12">
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="w-24 h-24 rounded-[36px] bg-blue-50 flex items-center justify-center text-[#1e3a8a] shadow-inner">
+              <Wallet className="w-12 h-12" />
             </div>
             <div className="text-center md:text-left space-y-3">
-              <h2 className="text-3xl font-black text-zinc-800 uppercase tracking-tight leading-none">{student.studentName}</h2>
+              <h2 className="text-3xl font-black text-zinc-800 uppercase tracking-tight leading-none">{student?.studentName || "Candidate"}</h2>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                <Badge variant="outline" className="rounded-lg border-zinc-100 text-zinc-400 font-bold text-[10px] uppercase px-3 py-1">ID: {student.admissionNo}</Badge>
-                <Badge className={cn("rounded-full border px-4 py-1 text-[10px] font-black uppercase flex items-center gap-1.5", statusBadge.color)}>
-                  {statusBadge.icon} {statusBadge.label}
-                </Badge>
+                <Badge variant="outline" className="rounded-lg border-zinc-100 text-zinc-400 font-bold text-[10px] uppercase">Session: {student.session || '2024-25'}</Badge>
+                <Badge className={cn(
+                  "rounded-full px-4 py-1 text-[9px] font-black uppercase border-none",
+                  totals.status === 'Paid' ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                )}>{totals.status} Status</Badge>
               </div>
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-[0.2em]">{student.course} | Section {student.section || 'A'} | {student.session || '2024-25'}</p>
+              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-[0.2em]">{student.course} • Section {student.section}</p>
             </div>
           </div>
 
           <div className="flex flex-col items-center lg:items-end gap-2">
-            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Attendance Health</p>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Balance Remaining</p>
             <div className="flex items-baseline gap-1">
-              <span className={cn("text-5xl font-black tracking-tighter", stats.percent >= 75 ? "text-emerald-600" : "text-rose-500")}>{stats.percent}</span>
-              <span className="text-2xl font-black text-zinc-300">%</span>
+              <span className="text-2xl font-black text-zinc-300">₹</span>
+              <span className={cn("text-5xl font-black tracking-tighter", totals.pending > 0 ? "text-rose-500" : "text-emerald-600")}>{totals.pending.toLocaleString()}</span>
             </div>
+            {student.feeDueDate && <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Due on {student.feeDueDate}</p>}
           </div>
         </div>
       </Card>
 
-      {/* 2️⃣ SUMMARY CARDS SECTION */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        <StatCard label="Working Days" value={stats.total} icon={<Calendar className="w-5 h-5 text-zinc-400" />} />
-        <StatCard label="Present" value={stats.present} icon={<UserCheck className="w-5 h-5 text-emerald-500" />} />
-        <StatCard label="Absent" value={stats.absent} icon={<XCircle className="w-5 h-5 text-rose-500" />} />
-        <StatCard label="On Leave" value={stats.leave} icon={<Clock className="w-5 h-5 text-blue-500" />} />
-        <StatCard label="Late Entries" value={stats.late || 0} icon={<AlertCircle className="w-5 h-5 text-amber-500" />} />
-        <StatCard label="Success Rate" value={`${stats.percent}%`} icon={<TrendingUp className="w-5 h-5 text-indigo-500" />} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <SummaryCard label="Total Academic Fee" value={`₹${totals.total.toLocaleString()}`} icon={<History className="text-zinc-400" />} />
+        <SummaryCard label="Total Amount Paid" value={`₹${totals.paid.toLocaleString()}`} icon={<CheckCircle2 className="text-emerald-500" />} color="text-emerald-600" />
+        <SummaryCard label="Discount / Relief" value="₹0" icon={<TrendingUp className="text-blue-500" />} />
       </div>
 
-      {/* 3️⃣ ATTENDANCE ANALYTICS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <Card className="lg:col-span-8 border-none shadow-sm rounded-[32px] bg-white p-8 space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1e3a8a]"><BarChart3 className="w-5 h-5" /></div>
-            <div>
-              <h3 className="text-lg font-black text-zinc-800 uppercase tracking-tight">Monthly Persistence</h3>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Session Performance Trends</p>
-            </div>
-          </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10}} />
-                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'}} />
-                <Legend iconType="circle" wrapperStyle={{paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase'}} />
-                <Bar dataKey="present" name="Present" fill="#10b981" radius={[4, 4, 0, 0]} barSize={24} />
-                <Bar dataKey="absent" name="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={24} />
-                <Bar dataKey="leave" name="Leave" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-4 border-none shadow-sm rounded-[32px] bg-white p-8 space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600"><PieChartIcon className="w-5 h-5" /></div>
-            <div>
-              <h3 className="text-lg font-black text-zinc-800 uppercase tracking-tight">Subject Wise</h3>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Engagement breakdown</p>
-            </div>
-          </div>
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={subjectData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {subjectData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-3">
-            {subjectData.map((s, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-[11px] font-bold text-zinc-500 uppercase">{s.name}</span>
-                </div>
-                <span className="text-xs font-black text-zinc-700">{s.value}%</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* 4️⃣ TABS NAVIGATION */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-white p-2 rounded-[24px] h-auto flex-wrap justify-start gap-2 shadow-sm border border-zinc-100">
-          <DashboardTabTrigger value="daily" label="Daily Attendance" icon={<Calendar className="w-4 h-4" />} />
-          <DashboardTabTrigger value="monthly" label="Monthly Report" icon={<BarChart3 className="w-4 h-4" />} />
-          <DashboardTabTrigger value="subject" label="Subject-Wise" icon={<BookOpen className="w-4 h-4" />} />
-          <DashboardTabTrigger value="leave" label="Leave History" icon={<Clock className="w-4 h-4" />} />
-          <DashboardTabTrigger value="policy" label="Attendance Policy" icon={<ShieldCheck className="w-4 h-4" />} />
-          <DashboardTabTrigger value="download" label="Download Reports" icon={<Download className="w-4 h-4" />} />
-        </TabsList>
-
-        <div className="mt-8">
-          {/* 5️⃣ DAILY ATTENDANCE TAB */}
-          <TabsContent value="daily" className="mt-0 animate-in fade-in duration-500">
-            <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-              <div className="p-8 border-b border-zinc-50 flex items-center justify-between">
-                <h3 className="font-black text-zinc-800 uppercase text-[10px] tracking-[0.2em]">Academic Presence Ledger</h3>
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest gap-2 bg-zinc-50"><Filter className="w-3 h-3" /> Filter Date</Button>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-zinc-50">
-                    <TableRow>
-                      <TableHead className="pl-8 text-[10px] font-black uppercase">Date</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">Day</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">Status</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">Remark</TableHead>
-                      <TableHead className="text-right pr-8 text-[10px] font-black uppercase">Log Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendanceData.map((log, i) => (
-                      <TableRow key={i} className="border-zinc-50 hover:bg-zinc-50/30 transition-all group">
-                        <TableCell className="pl-8 font-black text-zinc-700 font-mono">{log.date}</TableCell>
-                        <TableCell className="text-sm font-medium text-zinc-400">{format(parseISO(log.date), "EEEE")}</TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "rounded-md text-[9px] font-black uppercase border-none px-2.5",
-                            log.status === 'Present' ? "bg-emerald-50 text-emerald-600" :
-                            log.status === 'Absent' ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600"
-                          )}>
-                            {log.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-500 max-w-[200px] truncate">{log.remarks || '-'}</TableCell>
-                        <TableCell className="text-right pr-8 text-[10px] font-bold text-zinc-300">{log.updatedAt ? format(new Date(log.updatedAt), "hh:mm a") : '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                    {attendanceData.length === 0 && (
-                      <TableRow><TableCell colSpan={5} className="h-48 text-center text-zinc-300 italic">No attendance records found</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* 6️⃣ MONTHLY REPORT TAB */}
-          <TabsContent value="monthly" className="mt-0 animate-in fade-in duration-500">
-            <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-zinc-50">
-                    <TableRow>
-                      <TableHead className="pl-8 text-[10px] font-black uppercase h-14">Month</TableHead>
-                      <TableHead className="text-center text-[10px] font-black uppercase">Working Days</TableHead>
-                      <TableHead className="text-center text-[10px] font-black uppercase text-emerald-600">Present</TableHead>
-                      <TableHead className="text-center text-[10px] font-black uppercase text-rose-500">Absent</TableHead>
-                      <TableHead className="text-center text-[10px) font-black uppercase text-blue-500">Leave</TableHead>
-                      <TableHead className="text-right pr-8 text-[10px] font-black uppercase">Percentage %</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {monthlyData.map((m, i) => {
-                      const total = m.present + m.absent + m.leave
-                      const per = total > 0 ? Math.round((m.present / total) * 100) : 0
-                      return (
-                        <TableRow key={i} className="border-zinc-50">
-                          <TableCell className="pl-8 font-black text-zinc-700 uppercase">{m.name} 2024</TableCell>
-                          <TableCell className="text-center font-bold text-zinc-400">{total}</TableCell>
-                          <TableCell className="text-center font-black text-emerald-600">{m.present}</TableCell>
-                          <TableCell className="text-center font-black text-rose-500">{m.absent}</TableCell>
-                          <TableCell className="text-center font-black text-blue-500">{m.leave}</TableCell>
-                          <TableCell className="text-right pr-8 font-black text-[#1e3a8a]">{per}%</TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* 7️⃣ SUBJECT-WISE TAB */}
-          <TabsContent value="subject" className="mt-0 animate-in fade-in duration-500 space-y-6">
-            <div className="bg-rose-50 border border-rose-100 p-6 rounded-3xl flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-rose-500 shadow-sm"><AlertCircle className="w-6 h-6" /></div>
-              <div>
-                <h4 className="text-sm font-black text-rose-700 uppercase tracking-tight">Minimum Attendance Alert</h4>
-                <p className="text-xs text-rose-600 font-medium">Your attendance in <span className="font-bold">Chemistry</span> is currently 70%, which is below the required 75% minimum.</p>
-              </div>
-            </div>
-            <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-              <Table>
-                <TableHeader className="bg-zinc-50">
-                  <TableRow>
-                    <TableHead className="pl-8 text-[10px] font-black uppercase">Subject Name</TableHead>
-                    <TableHead className="text-center text-[10px] font-black uppercase">Total Classes</TableHead>
-                    <TableHead className="text-center text-[10px] font-black uppercase">Present</TableHead>
-                    <TableHead className="text-center text-[10px] font-black uppercase">Absent</TableHead>
-                    <TableHead className="text-right pr-8 text-[10px] font-black uppercase">Presence %</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subjectData.map((s, i) => (
-                    <TableRow key={i} className="border-zinc-50">
-                      <TableCell className="pl-8 font-bold text-zinc-700">{s.name}</TableCell>
-                      <TableCell className="text-center font-medium text-zinc-400">40</TableCell>
-                      <TableCell className="text-center font-black text-emerald-600">35</TableCell>
-                      <TableCell className="text-center font-black text-rose-500">5</TableCell>
-                      <TableCell className="text-right pr-8">
-                        <span className={cn("text-sm font-black", s.value < 75 ? "text-rose-500" : "text-emerald-600")}>{s.value}%</span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* 8️⃣ LEAVE HISTORY TAB */}
-          <TabsContent value="leave" className="mt-0 animate-in fade-in duration-500 space-y-6">
-            <div className="flex justify-end">
-              <Button className="bg-primary hover:opacity-90 text-white rounded-xl h-10 px-6 font-bold text-xs gap-2 shadow-lg shadow-blue-900/20"><Plus className="w-4 h-4" /> Apply for Leave</Button>
-            </div>
-            <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-zinc-50">
-                    <TableRow>
-                      <TableHead className="pl-8 text-[10px] font-black uppercase h-14">Leave Type</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">From Date</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">To Date</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">Reason</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase">Status</TableHead>
-                      <TableHead className="text-right pr-8 text-[10px] font-black uppercase">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {leaveRequests.map((l, i) => (
-                      <TableRow key={i} className="border-zinc-50">
-                        <TableCell className="pl-8 font-bold text-zinc-700 uppercase">{l.leaveType}</TableCell>
-                        <TableCell className="text-sm text-zinc-500">{l.fromDate}</TableCell>
-                        <TableCell className="text-sm text-zinc-500">{l.toDate}</TableCell>
-                        <TableCell className="max-w-[200px] truncate text-xs text-zinc-400 font-medium">{l.reason}</TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "rounded-md text-[9px] font-black uppercase border-none px-2",
-                            l.status === 'Approved' ? "bg-emerald-50 text-emerald-600" :
-                            l.status === 'Rejected' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"
-                          )}>
-                            {l.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right pr-8">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-300 hover:text-rose-500"><XCircle className="w-4 h-4" /></Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {leaveRequests.length === 0 && (
-                      <TableRow><TableCell colSpan={6} className="h-48 text-center text-zinc-300 italic">No leave history found</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* 9️⃣ POLICY TAB */}
-          <TabsContent value="policy" className="mt-0 animate-in fade-in duration-500">
-            <Card className="border-none shadow-sm rounded-[32px] bg-white p-10 space-y-10">
-              <div className="space-y-6">
-                <SectionHeader icon={<ShieldCheck className="text-[#1e3a8a]" />} title="Institutional Attendance Rules" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <PolicyItem title="Minimum Requirement" description="Every student must maintain at least 75% overall attendance to be eligible for final examinations." />
-                  <PolicyItem title="Late Entry Policy" description="Students arriving 15 minutes after class commencement will be marked as 'Late'. Three late entries equal one absence." />
-                  <PolicyItem title="Leave Submission" description="Leave applications must be submitted via the portal at least 24 hours in advance, except for emergencies." />
-                  <PolicyItem title="Medical Absences" description="Medical leave exceeding 3 days requires a valid doctor's certificate to be uploaded in the documents section." />
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* 10️⃣ DOWNLOAD REPORTS TAB */}
-          <TabsContent value="download" className="mt-0 animate-in fade-in duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <DownloadCard title="Monthly Attendance" description="Detailed day-wise presence report for the current month." format="PDF" />
-              <DownloadCard title="Yearly Summary" description="Aggregated academic session attendance overview." format="EXCEL" />
-              <DownloadCard title="Leave Audit" description="Complete record of leave applications and status history." format="PDF" />
-            </div>
-          </TabsContent>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-7 space-y-8">
+          <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+            <div className="p-8 border-b border-zinc-50 flex items-center justify-between"><h3 className="text-sm font-black text-zinc-800 uppercase tracking-[0.2em]">Fee Breakdown Matrix</h3><Info className="w-4 h-4 text-zinc-200" /></div>
+            <div className="overflow-x-auto"><Table><TableHeader className="bg-zinc-50"><TableRow><TableHead className="pl-8 text-[10px] font-black uppercase">Category</TableHead><TableHead className="text-[10px] font-black uppercase text-center">Net Amount</TableHead><TableHead className="text-right pr-8 text-[10px] font-black uppercase">Paid</TableHead></TableRow></TableHeader><TableBody>{breakdown.map((item, i) => (<TableRow key={i} className="border-zinc-50 hover:bg-zinc-50/30 transition-all"><TableCell className="pl-8 py-6"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400">{item.icon}</div><span className="text-sm font-bold text-zinc-700">{item.type}</span></div></TableCell><TableCell className="text-center font-bold text-zinc-400">₹{item.total.toLocaleString()}</TableCell><TableCell className="text-right pr-8 font-black text-emerald-600">₹{item.paid.toLocaleString()}</TableCell></TableRow>))}</TableBody></Table></div>
+          </Card>
         </div>
-      </Tabs>
+
+        <div className="lg:col-span-5 space-y-8">
+          <Card className="border-none shadow-xl rounded-[40px] bg-zinc-900 p-10 text-white relative overflow-hidden h-fit">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+            <div className="relative z-10 space-y-10">
+              <div className="space-y-4">
+                <Badge className="bg-primary/20 text-primary border-none uppercase text-[9px] font-black tracking-widest px-3">Secure Checkout</Badge>
+                <h3 className="text-2xl font-black uppercase tracking-tight">Immediate Payment</h3>
+                <div className="flex items-baseline gap-2"><span className="text-4xl font-black text-white">₹{totals.pending.toLocaleString()}</span></div>
+              </div>
+              {totals.pending > 0 ? (
+                <div className="space-y-4">
+                  <Dialog open={isPayModalOpen} onOpenChange={setIsPayModalOpen}>
+                    <DialogTrigger asChild><Button className="w-full h-16 bg-primary hover:bg-primary/90 text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl border-none active:scale-95 transition-all">Clear Dues Online</Button></DialogTrigger>
+                    <DialogContent className="max-w-md p-0 border-none rounded-[40px] overflow-hidden bg-white shadow-2xl"><div className="bg-[#1e3a8a] p-10 text-white relative"><div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" /><DialogClose className="absolute right-6 top-6 p-2 rounded-full hover:bg-white/10 text-white/40 border-none outline-none"><X className="h-6 w-6" /></DialogClose><div className="space-y-4"><Badge className="bg-white/10 text-white border-none text-[9px] font-black uppercase tracking-widest px-3">Gateway</Badge><DialogTitle className="text-3xl font-black uppercase tracking-tight leading-none">Pay Online</DialogTitle></div></div><div className="p-10 space-y-8"><div className="bg-zinc-50 p-6 rounded-3xl border border-zinc-100 flex justify-between items-center"><span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Amount</span><span className="text-xl font-black text-zinc-800">₹{totals.pending.toLocaleString()}</span></div><RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 gap-3"><PaymentOption value="upi" icon={<Smartphone className="w-4 h-4" />} label="UPI (Paytm, GPay)" /><PaymentOption value="card" icon={<CreditCard className="w-4 h-4" />} label="Credit / Debit Card" /></RadioGroup><Button onClick={handlePayment} disabled={isProcessing} className="w-full h-14 bg-[#1e3a8a] text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl border-none">{isProcessing ? <Loader2 className="animate-spin h-5 w-5" /> : 'Pay Securely Now'}</Button></div></DialogContent>
+                  </Dialog>
+                </div>
+              ) : (
+                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 flex items-center gap-4 text-emerald-400"><CheckCircle2 className="w-6 h-6" /><p className="text-xs font-black uppercase tracking-widest">No outstanding balance</p></div>
+              )}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 px-2"><History className="w-4 h-4 text-zinc-400" /><h3 className="text-sm font-black text-zinc-800 uppercase tracking-[0.2em]">Transaction Registry</h3></div>
+        <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
+          <div className="overflow-x-auto"><Table><TableHeader className="bg-zinc-50"><TableRow><TableHead className="pl-8 text-[10px] font-black uppercase h-14">Date</TableHead><TableHead className="text-[10px] font-black uppercase">Receipt No</TableHead><TableHead className="text-[10px] font-black uppercase">Method</TableHead><TableHead className="text-[10px] font-black uppercase">Amount</TableHead><TableHead className="text-right pr-8 text-[10px] font-black uppercase">Receipt</TableHead></TableRow></TableHeader><TableBody>{payments.map((p, i) => (<TableRow key={i} className="border-zinc-50 hover:bg-zinc-50/30 transition-all"><TableCell className="pl-8 font-black text-zinc-400 font-mono text-xs">{p.date}</TableCell><TableCell className="text-sm font-bold text-zinc-700">{p.receiptNo || '-'}</TableCell><TableCell className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{p.paymentMode || p.method}</TableCell><TableCell className="text-sm font-black text-[#1e3a8a]">₹{Number(p.amount).toLocaleString()}</TableCell><TableCell className="text-right pr-8"><Button onClick={() => generatePremiumReceipt(p)} variant="ghost" className="h-9 px-4 rounded-xl bg-zinc-50 text-zinc-500 font-black text-[9px] uppercase tracking-widest hover:bg-[#1e3a8a] hover:text-white transition-all"><Printer className="w-3.5 h-3.5 mr-1.5" /> Print</Button></TableCell></TableRow>))}</TableBody></Table></div>
+        </Card>
+      </section>
     </main>
   )
 }
 
-function StatCard({ label, value, icon }: any) {
+function SummaryCard({ label, value, icon, color = "text-zinc-800" }: any) {
   return (
-    <Card className="border-none shadow-sm rounded-3xl bg-white p-6 group hover:shadow-md transition-all">
-      <div className="flex flex-col gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-zinc-50 flex items-center justify-center transition-colors group-hover:bg-white group-hover:shadow-inner">
-          {icon}
-        </div>
-        <div>
-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">{label}</p>
-          <h4 className="text-xl font-black text-zinc-800 tracking-tight">{value}</h4>
-        </div>
-      </div>
+    <Card className="border-none shadow-sm rounded-3xl bg-white p-8 group hover:shadow-md transition-all">
+      <div className="flex flex-col gap-4"><div className="w-10 h-10 rounded-2xl bg-zinc-50 flex items-center justify-center transition-colors group-hover:bg-white">{icon}</div><div><p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">{label}</p><h4 className={cn("text-2xl font-black tracking-tight leading-none", color)}>{value}</h4></div></div>
     </Card>
   )
 }
 
-function DashboardTabTrigger({ value, label, icon }: any) {
+function PaymentOption({ value, icon, label }: any) {
   return (
-    <TabsTrigger 
-      value={value} 
-      className="h-11 px-6 rounded-xl data-[state=active]:bg-[#1e3a8a] data-[state=active]:text-white text-zinc-500 font-bold text-[10px] uppercase tracking-widest transition-all border border-transparent data-[state=active]:shadow-lg"
-    >
-      <span className="flex items-center gap-2">{icon} {label}</span>
-    </TabsTrigger>
-  )
-}
-
-function SectionHeader({ icon, title }: any) {
-  return (
-    <h3 className="text-lg font-black text-zinc-800 flex items-center gap-3 uppercase tracking-tight">
-      <div className="w-8 h-8 rounded-lg bg-zinc-50 flex items-center justify-center">{icon}</div>
-      {title}
-    </h3>
-  )
-}
-
-function PolicyItem({ title, description }: { title: string, description: string }) {
-  return (
-    <div className="p-6 rounded-3xl border border-zinc-50 bg-zinc-50/30 space-y-2">
-      <h4 className="text-sm font-black text-zinc-800 uppercase tracking-tight">{title}</h4>
-      <p className="text-xs text-zinc-500 font-medium leading-relaxed">{description}</p>
-    </div>
-  )
-}
-
-function DownloadCard({ title, description, format }: { title: string, description: string, format: string }) {
-  return (
-    <Card className="border-none shadow-sm rounded-[32px] bg-white p-8 flex flex-col items-center text-center space-y-6 group hover:shadow-xl transition-all duration-500">
-      <div className="w-16 h-16 rounded-[24px] bg-indigo-50 flex items-center justify-center text-[#1e3a8a] group-hover:scale-110 transition-transform">
-        <FileText className="w-8 h-8" />
-      </div>
-      <div className="space-y-2">
-        <h4 className="text-lg font-black text-zinc-800 uppercase tracking-tight">{title}</h4>
-        <p className="text-xs text-zinc-400 font-medium leading-relaxed">{description}</p>
-      </div>
-      <Button className="w-full h-12 rounded-2xl bg-zinc-900 hover:bg-primary text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-lg transition-all border-none">
-        Generate {format} Report
-      </Button>
-    </Card>
+    <Label htmlFor={value} className="flex items-center justify-between p-5 rounded-2xl border-2 border-zinc-100 cursor-pointer hover:bg-zinc-50 transition-all [&:has([data-state=checked])]:border-[#1e3a8a] [&:has([data-state=checked])]:bg-blue-50/30 group">
+      <div className="flex items-center gap-4"><div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:text-[#1e3a8a] transition-all">{icon}</div><span className="text-sm font-bold text-zinc-700">{label}</span></div>
+      <RadioGroupItem value={value} id={value} className="border-zinc-300 text-[#1e3a8a]" />
+    </Label>
   )
 }
