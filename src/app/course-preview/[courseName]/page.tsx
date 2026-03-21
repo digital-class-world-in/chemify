@@ -1,9 +1,9 @@
- 
+
 "use client"
 
 import { useState, useEffect, use } from "react"
 import { useFirebase } from "@/firebase"
-import { ref, onValue, off, push } from "firebase/database"
+import { ref, onValue, off, push, get } from "firebase/database"
 import { motion } from "framer-motion"
 import { 
   Clock, 
@@ -88,8 +88,10 @@ const DEFAULT_OUTCOMES = [
   "Career counseling & placement support"
 ]
 
-export default function CourseDetailPage({ params }: { params: Promise<{ id: string, courseId: string }> }) {
-  const { id, courseId } = use(params)
+export default function CourseDetailPage({ params }: { params: { id: string } }) {
+  const instituteId = "JzZYbd6RobXVEn42uupTklHW1sn1";
+  const courseId = params.id;
+  const id = "b2";
   const { database } = useFirebase()
   
   const [resolvedUid, setResolvedUid] = useState<string | null>(null)
@@ -100,7 +102,31 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const [courses, setCourses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
-  
+
+  const DUMMY_COURSE = {
+  name: "Demo Course Title",
+  description: "This is a sample course description. Real course data will appear here when available.",
+  image: "https://placehold.co/800x500?text=Course+Preview",
+  backgroundImage: "https://placehold.co/1200x800?text=Background",
+  duration: "3",
+  hours: "120",
+  totalChapters: "10",
+  language: "English",
+  provideCertificate: "Yes",
+  paymentMode: "Full Payment",
+  sellingPrice: 1999,
+  originalPrice: 3999,
+  type: "Online",
+  outcomes: {
+    1: "Gain practical skills",
+    2: "Work on real projects",
+    3: "Get certification",
+    4: "Career support"
+  }
+}
+const finalCourse = course || DUMMY_COURSE;
+const isDummy = !course;
+const [courseNotFound, setCourseNotFound] = useState(false)
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false)
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -121,29 +147,33 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     if (!database || !id) return
-    onValue(ref(database, `Slugs/${id}`), (snapshot) => {
+    get(ref(database, `Slugs/${id}`)).then((snapshot) => {
       const uid = snapshot.val() || id; 
       setResolvedUid(uid);
-    }, { onlyOnce: true });
+    });
   }, [database, id])
 
   useEffect(() => {
     if (!database || !resolvedUid || !courseId) return
     const rootPath = `Institutes/${resolvedUid}`
     
-    onValue(ref(database, `${rootPath}/profile`), (snapshot) => {
+    const profileRef = ref(database, `${rootPath}/profile`)
+    const unsubProfile = onValue(profileRef, (snapshot) => {
       if (snapshot.exists()) setProfile(snapshot.val())
     })
 
-    onValue(ref(database, `${rootPath}/website_settings`), (snapshot) => {
+    const settingsRef = ref(database, `${rootPath}/website_settings`)
+    const unsubSettings = onValue(settingsRef, (snapshot) => {
       if (snapshot.exists()) setSettings(snapshot.val())
     })
 
-    onValue(ref(database, `${rootPath}/payment-settings`), (snapshot) => {
+    const paySettingsRef = ref(database, `${rootPath}/payment-settings`)
+    const unsubPaySettings = onValue(paySettingsRef, (snapshot) => {
       if (snapshot.exists()) setPaymentSettings(snapshot.val())
     })
 
-    onValue(ref(database, `${rootPath}/website_courses/${courseId}`), (snapshot) => {
+    const courseRef = ref(database, `${rootPath}/website_courses/${courseId}`)
+    const unsubCourse = onValue(courseRef, (snapshot) => {
       if (snapshot.exists()) {
         const c = { ...snapshot.val(), id: snapshot.key }
         setCourse(c)
@@ -151,11 +181,20 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       }
     })
 
-    onValue(ref(database, `${rootPath}/website_courses`), (s) => {
+    const coursesRef = ref(database, `${rootPath}/website_courses`)
+    const unsubCourses = onValue(coursesRef, (s) => {
       const data = s.val() || {}
       setCourses(Object.keys(data).map(k => ({ ...data[k], id: k })))
       setIsLoading(false)
     })
+
+    return () => {
+      off(profileRef)
+      off(settingsRef)
+      off(paySettingsRef)
+      off(courseRef)
+      off(coursesRef)
+    }
   }, [database, resolvedUid, courseId])
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -226,9 +265,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     <div className="min-h-screen bg-white overflow-x-hidden selection:bg-primary/20" style={{ fontFamily: settings?.styling?.fontFamily || 'Poppins' }}>
       <header className="fixed top-0 left-0 right-0 z-[100] bg-white shadow-md py-4 transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Link href={`/`} className="flex items-center gap-3 hover:opacity-80 transition-all">
+          <Link href={`/sites/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-all">
             {profile?.logoUrl ? (
-              <img src={profile.logoUrl} className="h-12 w-auto" alt="Logo" />
+               <img 
+  src={profile.logoUrl} 
+  className="h-20 w-auto object-contain" 
+  alt="Logo" 
+/>
             ) : (
               <>
                 <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
@@ -242,13 +285,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
           </Link>
 
           <nav className="hidden lg:flex gap-8 font-black uppercase text-[14px] tracking-widest text-zinc-600">
-            <Link href={`/sites/${id}`} className="hover:text-primary transition-colors">Home</Link>
-            <Link href={`/sites/${id}#about`} className="hover:text-primary transition-colors">About Us</Link>
-            <Link href={`/sites/${id}#courses`} className="hover:text-primary transition-colors">Courses</Link>
-            <Link href={`/sites/${id}/infrastructure`} className="hover:text-primary transition-colors">Facilities</Link>
-            <Link href={`/sites/${id}/gallery`} className="hover:text-primary transition-colors">Gallery</Link>
-            <Link href={`/sites/${id}#blog`} className="hover:text-primary transition-colors">Blogs</Link>
-            <Link href={`/sites/${id}#contact`} className="hover:text-primary transition-colors">Contact</Link>
+            <Link href={`/#`} className="hover:text-primary transition-colors">Home</Link>
+            <Link href={`#about`} className="hover:text-primary transition-colors">About Us</Link>
+            <Link href={`/#courses`} className="hover:text-primary transition-colors">Courses</Link>
+            <Link href={`/infrastructure`} className="hover:text-primary transition-colors">Facilities</Link>
+            <Link href={`/gallery`} className="hover:text-primary transition-colors">Gallery</Link>
+            <Link href={`/#blog`} className="hover:text-primary transition-colors">Blogs</Link>
+            <Link href={`/#contact`} className="hover:text-primary transition-colors">Contact</Link>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -326,9 +369,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
               <div className="space-y-8">
                 <Tabs defaultValue="description" className="w-full">
                   <TabsList className="w-full justify-start bg-transparent h-auto p-0 gap-8 border-b border-zinc-100 rounded-none mb-10">
-                    <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[14px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">Description</TabsTrigger>
-                    <TabsTrigger value="syllabus" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[14px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">Syllabus</TabsTrigger>
-                    <TabsTrigger value="faq" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[14px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">FAQ</TabsTrigger>
+                    <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[11px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">Description</TabsTrigger>
+                    <TabsTrigger value="syllabus" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[11px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">Syllabus</TabsTrigger>
+                    <TabsTrigger value="faq" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-4 font-black uppercase text-[11px] tracking-widest text-zinc-400 data-[state=active]:text-zinc-900 transition-none">FAQ</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="description" className="mt-0 animate-in fade-in duration-500 space-y-12">
@@ -341,9 +384,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                         <CheckCircle2 className="w-6 h-6 text-primary" /> {course.outcomeHeading || "What you'll achieve"}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {outcomes.map((point: string, i: number) => (
-                          <OutcomeItem key={i} text={point} />
-                        ))}
+                       
                       </div>
                     </div>
                   </TabsContent>
@@ -450,7 +491,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                     <Button 
                       onClick={() => { setIsSubmitted(false); setIsApplyModalOpen(true); }}
                       variant="outline"
-                      className="h-12 border-blue-600 text-blue-600 font-black uppercase text-[10px] tracking-widest hover:bg-blue-50 transition-all rounded-xl"
+                      className="h-12 border-primary text-primary hover:text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/5 transition-all rounded-xl"
                     >
                       Enquiry Now
                     </Button>
@@ -593,7 +634,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             <ul className="space-y-4 text-zinc-500 text-xs font-bold uppercase tracking-tight">
               <li><Link href={`/sites/${id}`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Home</Link></li>
               <li><Link href={`/sites/${id}#about`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> About Us</Link></li>
-              <li><Link href={`/sites/${id}/infrastructure`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Facilities</Link></li>
+              <li><Link href={`/sites/${id}#courses`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Courses</Link></li>
+              <li><Link href="#" className="text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Facilities</Link></li>
               <li><Link href={`/sites/${id}/gallery`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Gallery</Link></li>
               <li><Link href={`/sites/${id}#blog`} className="hover:text-primary transition-colors flex items-center gap-2"><ChevronRight className="w-3 h-3" /> Blogs</Link></li>
             </ul>
@@ -615,33 +657,37 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       </footer>
 
       <Dialog open={isApplyModalOpen} onOpenChange={setIsApplyModalOpen}>
-        <DialogContent className="max-w-[95vw] md:max-w-[600px] p-0 border-none rounded-[40px] overflow-hidden bg-white shadow-2xl [&_[data-radix-dialog-close]]:hidden focus:outline-none">
-          <div className="relative bg-primary px-10 py-10 text-white">
+        <DialogContent className="max-w-[95vw] md:max-w-[500px] p-0 border-none rounded-[40px] overflow-hidden bg-white shadow-2xl [&_[data-radix-dialog-close]]:hidden focus:outline-none">
+          <div className="bg-primary p-10 text-white relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
             <DialogClose className="absolute right-6 top-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white border-none outline-none transition-all">
               <X className="h-6 w-6" />
             </DialogClose>
-            <div className="space-y-2.5">
-              <DialogTitle className="text-3xl font-black tracking-tight leading-tight uppercase">Submit Inquiry</DialogTitle>
-              <p className="text-sm text-white/90 font-medium leading-relaxed">Our counselors will review your inquiry and get back to you within 24 business hours.</p>
+            <div className="space-y-4">
+              <Badge className="bg-white/10 text-white border-none text-[9px] font-black uppercase tracking-widest px-3">Admission Desk</Badge>
+              <DialogTitle className="text-3xl font-black uppercase tracking-tight leading-none">Apply for Admission</DialogTitle>
+              <p className="text-sm text-blue-100 font-medium">Start your academic journey with us today.</p>
             </div>
           </div>
-
-          <ScrollArea className="max-h-[70vh]">
+          <ScrollArea className="max-h-[85vh]">
             <div className="p-10">
               {isSubmitted ? (
                 <div className="py-10 text-center space-y-6">
-                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-500 shadow-inner">
-                    <CheckCircle2 className="w-12 h-12" />
-                  </div>
+                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-500 shadow-inner"><CheckCircle2 className="w-12 h-12" /></div>
                   <h3 className="text-2xl font-black uppercase tracking-tight">Inquiry Received</h3>
                   <p className="text-sm text-zinc-500 font-medium leading-relaxed">We have received your application. Our counselor will contact you shortly.</p>
                   <Button onClick={() => { setIsSubmitted(false); setIsApplyModalOpen(false); }} className="w-full h-12 bg-zinc-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest border-none">Close Window</Button>
                 </div>
               ) : (
                 <form onSubmit={handleFormSubmit} className="space-y-6">
-                  <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Full Name</Label><Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 shadow-inner font-bold text-black" /></div>
-                  <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Mobile Number</Label><Input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} required className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 shadow-inner font-bold text-black" /></div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Full Name</Label>
+                    <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 shadow-inner font-bold text-black" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Mobile Number</Label>
+                    <Input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} required className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 shadow-inner font-bold text-black" />
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Select Program</Label>
                     <Select value={formData.course} onValueChange={val => setFormData({...formData, course: val})} required>
@@ -649,7 +695,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                       <SelectContent>{courses.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2"><Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Additional Notes</Label><Textarea value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} placeholder="Ask about timings, fees, etc." className="rounded-2xl bg-zinc-50 border-zinc-100 min-h-[120px] text-black font-medium" /></div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest ml-1">Additional Notes</Label>
+                    <Textarea value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} placeholder="Ask about timings, fees, etc." className="rounded-2xl bg-zinc-50 border-zinc-100 min-h-[120px] text-black font-medium" />
+                  </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full h-16 bg-primary text-white rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl border-none active:scale-95 transition-all border-none">
                     {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />} Send Inquiry
                   </Button>
@@ -720,4 +769,3 @@ function SocialBtn({ icon, href }: { icon: any, href: string }) {
     </a>
   )
 }
- 
