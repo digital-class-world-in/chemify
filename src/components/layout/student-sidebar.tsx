@@ -52,7 +52,7 @@ interface MenuItem {
   color?: string
 }
 
-const studentMenu: MenuItem[] = [
+export const studentMenu: MenuItem[] = [
   { id: 'dashboard', nameKey: 'dashboard', href: '/student/dashboard', icon: LayoutDashboard, color: "text-blue-500" },
   { id: 'profile', nameKey: 'student_admission', href: '/student/profile', icon: User, color: "text-indigo-500" },
   { id: 'batch', nameKey: 'batch_management', href: '/student/batch', icon: Layers, color: "text-purple-500" },
