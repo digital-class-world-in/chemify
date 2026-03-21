@@ -58,7 +58,7 @@ export default function StudentFeesPage() {
     const instRef = ref(database, `Institutes`)
     onValue(instRef, (snap) => {
       const institutes = snap.val() || {}
-      let foundStudent = null
+      let foundStudent: { id: any } | null = null
       let foundAdmin = null
 
       Object.keys(institutes).forEach(id => {
