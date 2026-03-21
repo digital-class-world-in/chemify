@@ -110,7 +110,7 @@ export function TopNav() {
   const handleOpenWebsite = () => {
     const target = profile?.slug || resolvedId
     if (target) {
-      window.open(`/}`, '_blank')
+      window.open(`/`, '_blank')
     }
   }
 
