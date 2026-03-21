@@ -23,7 +23,8 @@ import {
   Calendar as CalendarIcon,
   Info,
   Clock,
-  PartyPopper
+  PartyPopper,
+  Badge
 } from "lucide-react"
 import { useFirebase, useUser } from "@/firebase"
 import { ref, onValue, push, remove, off, update } from "firebase/database"
@@ -44,6 +45,7 @@ import {
   parseISO
 } from "date-fns"
 import { usePathname } from "next/navigation"
+import { Textarea } from "@/components/ui/textarea"
 
 const ENTRY_TYPES = ["Holiday", "Activity", "Event"]
 const COLORS: Record<string, any> = {
@@ -255,11 +257,11 @@ export default function HolidayCalendarPage() {
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Commencement</Label>
-                  <Input name="startDate" type="date" required defaultValue={editingHoliday?.startDate || today} className="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 font-bold" />
+                  <Input name="startDate" type="date" required defaultValue={editingHoliday?.startDate || isToday} className="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 font-bold" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Conclusion</Label>
-                  <Input name="endDate" type="date" defaultValue={editingHoliday?.endDate || today} className="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 font-bold" />
+                  <Input name="endDate" type="date" defaultValue={editingHoliday?.endDate || isToday} className="h-12 rounded-xl border-zinc-100 bg-zinc-50/50 font-bold" />
                 </div>
               </div>
 
