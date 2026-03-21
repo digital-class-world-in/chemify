@@ -57,7 +57,7 @@ export const studentMenu: MenuItem[] = [
   { id: 'profile', nameKey: 'student_admission', href: '/student/profile', icon: User, color: "text-indigo-500" },
   { id: 'batch', nameKey: 'batch_management', href: '/student/batch', icon: Layers, color: "text-purple-500" },
   { id: 'live_classes', nameKey: 'live_classes', href: '/student/live-classes', icon: Video, color: "text-rose-500" },
-  { id: 'attendance', nameKey: 'attendance', href: '/student/attendance', icon: UserCheck, color: "text-emerald-500" },
+ 
   { 
     id: 'exams', 
     nameKey: 'examination', 
@@ -75,7 +75,7 @@ export const studentMenu: MenuItem[] = [
   { id: 'leave', nameKey: 'leave_request', href: '/student/leave', icon: UserCheck, color: "text-teal-500" },
   { id: 'holidays', nameKey: 'holiday_calendar', href: '/student/holidays', icon: CalendarDays, color: "text-sky-500" },
   { id: 'announcement', nameKey: 'announcement', href: '/student/announcements', icon: Megaphone, color: "text-pink-500" },
-  { id: 'events', nameKey: 'announcement', href: '/student/events', icon: Star, color: "text-amber-500" },
+  
   { id: 'documents', nameKey: 'document_management', href: '/student/documents', icon: FolderOpen, color: "text-amber-600" },
   { id: 'feedback', nameKey: 'complains', href: '/student/feedback', icon: MessageSquare, color: "text-zinc-500" },
   { id: 'notifications', nameKey: 'notification', href: '/student/notifications', icon: Bell, color: "text-amber-500" },

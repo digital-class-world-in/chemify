@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
@@ -178,11 +179,17 @@ export default function VisitorBooksPage() {
     finally { setIsDeleting(false); setItemToDelete(null); }
   }
 
+  const downloadSampleCsv = () => {
+    const headers = ["Name", "Phone", "Id_Card_No", "Meeting_With", "Total_Person", "Date", "Purpose", "In_Time", "Out_Time"]
+    const sampleData = [["Alice Wonder", "9876543210", "ID-999", "Principal", "1", today, "Parent Teacher Meeting", "10:00 AM", "11:00 AM"]]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Sample")
+    XLSX.writeFile(wb, "visitor_registry_sample.csv")
+  }
+
   const resetFilters = () => {
-    setFromDate("")
-    setToDate("")
-    setSearchTerm("")
-    setCurrentPage(1)
+    setFromDate(""); setToDate(""); setSearchTerm(""); setCurrentPage(1);
   }
 
   const exportPDF = () => {
@@ -238,34 +245,34 @@ export default function VisitorBooksPage() {
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
             <div>
-              <h2 className="text-3xl font-medium text-zinc-800 font-headline tracking-tight leading-none">Visitor Books ({filteredItems.length})</h2>
+              <h2 className="text-[14px] font-normal text-zinc-800 font-headline tracking-tight leading-none uppercase">Visitor Books ({filteredItems.length})</h2>
               <p className="text-sm text-zinc-400 font-medium mt-1">Record daily institutional visitor logs</p>
             </div>
             <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if(!open) { setEditingItem(null); setSelectedFile(null); } }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingItem(null)} className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-bold text-sm border-none shadow-lg active:scale-95 transition-all">
+                <Button onClick={() => setEditingItem(null)} className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-medium text-base border-none shadow-lg active:scale-95 transition-all">
                   Add New
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl p-0 border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-2xl">
                 <div className="bg-white px-8 py-4 border-b border-zinc-100">
-                  <DialogTitle className="text-lg font-bold text-zinc-800">New Visitor Entry</DialogTitle>
+                  <DialogTitle className="text-lg font-bold text-zinc-800 font-public-sans">New Visitor Entry</DialogTitle>
                 </div>
                 <ScrollArea className="max-h-[75vh]">
-                  <form onSubmit={handleSave} className="p-8 space-y-6">
+                  <form onSubmit={handleSave} className="p-8 space-y-6 font-public-sans text-[14px]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Visitor Name</Label><Input name="name" defaultValue={editingItem?.name} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Phone Number</Label><Input name="phone" type="text" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} onInput={(e) => e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')} defaultValue={editingItem?.phone} required placeholder="Phone" className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Id Card No.</Label><Input name="idCardNo" defaultValue={editingItem?.idCardNo} className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Meeting With</Label><Input name="meetingWith" defaultValue={editingItem?.meetingWith} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Total Person</Label><Input name="totalPerson" type="number" defaultValue={editingItem?.totalPerson || "1"} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Date</Label><Input name="date" type="date" defaultValue={editingItem?.date || today} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Purpose of Visit</Label><Input name="purpose" defaultValue={editingItem?.purpose} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">In Time</Label><Input name="inTime" type="time" defaultValue={editingItem?.inTime} required className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Out Time</Label><Input name="outTime" type="time" defaultValue={editingItem?.outTime} className="rounded-xl h-11 font-medium text-black" /></div>
-                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Attachment</Label><div className="flex items-center gap-4"><Input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} className="rounded-xl h-11 border-dashed" accept="image/*,.pdf" />{editingItem?.attachmentUrl && <Button variant="outline" asChild size="icon" className="h-11 w-11 shrink-0"><a href={editingItem.attachmentUrl} target="_blank"><Download className="w-4 h-4" /></a></Button>}</div></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Visitor Name</Label><Input name="name" defaultValue={editingItem?.name} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Phone Number</Label><Input name="phone" type="text" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} onInput={(e) => e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')} defaultValue={editingItem?.phone} required placeholder="Phone" className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Id Card No.</Label><Input name="idCardNo" defaultValue={editingItem?.idCardNo} className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Meeting With</Label><Input name="meetingWith" defaultValue={editingItem?.meetingWith} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Total Person</Label><Input name="totalPerson" type="number" defaultValue={editingItem?.totalPerson || "1"} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Date</Label><Input name="date" type="date" defaultValue={editingItem?.date || today} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Purpose of Visit</Label><Input name="purpose" defaultValue={editingItem?.purpose} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">In Time</Label><Input name="inTime" type="time" defaultValue={editingItem?.inTime} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Out Time</Label><Input name="outTime" type="time" defaultValue={editingItem?.outTime} className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Attachment</Label><div className="flex items-center gap-4"><Input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} className="rounded-xl h-11 border-dashed font-bold text-[14px]" accept="image/*,.pdf" />{editingItem?.attachmentUrl && <Button variant="outline" asChild size="icon" className="h-11 w-11 shrink-0"><a href={editingItem.attachmentUrl} target="_blank"><Download className="w-4 h-4" /></a></Button>}</div></div>
                     </div>
-                    <div className="pt-4"><Button type="submit" disabled={isSubmitting} className="w-fit h-14 px-12 bg-primary hover:opacity-90 text-white rounded-2xl font-bold text-sm shadow-xl border-none active:scale-95 transition-all">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Authorize Entry"}</Button></div>
+                    <div className="pt-4"><Button type="submit" disabled={isSubmitting} className="w-fit h-14 px-12 bg-primary hover:opacity-90 text-white rounded-2xl font-bold text-sm shadow-xl border-none active:scale-95 transition-all uppercase text-[10px] tracking-widest">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Authorize Entry"}</Button></div>
                   </form>
                 </ScrollArea>
               </DialogContent>
@@ -283,11 +290,11 @@ export default function VisitorBooksPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <Label className="text-[12px] font-medium text-zinc-400">From Date</Label>
+                <Label className="text-[12px] font-medium text-zinc-400 uppercase">From Date</Label>
                 <Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }} className="h-11 rounded-xl bg-white border-zinc-200 text-sm font-bold text-zinc-600 shadow-inner" />
               </div>
               <div className="space-y-2">
-                <Label className="text-[12px] font-medium text-zinc-400">To Date</Label>
+                <Label className="text-[12px] font-medium text-zinc-400 uppercase">To Date</Label>
                 <Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }} className="h-11 rounded-xl bg-white border-zinc-200 text-sm font-bold text-zinc-600 shadow-inner" />
               </div>
             </div>
@@ -305,11 +312,11 @@ export default function VisitorBooksPage() {
                 />
               </div>
               <div className="flex items-center gap-3 flex-wrap">
-                <Button variant="outline" onClick={() => XLSX.writeFile(XLSX.utils.book_new(), "sample.csv")} className="h-11 px-5 text-[#0D9488] border-[#0D9488]/20 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm"><Download className="h-4 w-4" /> Sample CSV</Button>
+                <Button variant="outline" onClick={downloadSampleCsv} className="h-11 px-5 text-[#0D9488] border-[#0D9488]/20 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm"><Download className="h-4 w-4" /> Sample CSV</Button>
                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv" />
                 <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-11 px-5 text-indigo-600 border-indigo-100 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-indigo-50 shadow-sm"><Upload className="h-4 w-4" /> Import CSV</Button>
-                <Button variant="outline" onClick={exportExcel} className="h-11 px-5 text-emerald-600 border-emerald-100 rounded-xl transition-none gap-2.5 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm"><FileSpreadsheet className="h-4 w-4" /> Export Excel</Button>
-                <Button variant="outline" onClick={exportPDF} className="h-11 px-4 text-rose-600 border-rose-100 rounded-xl transition-none gap-2.5 font-bold text-xs bg-white hover:bg-rose-50 shadow-sm"><FileText className="h-4 w-4" /> Export PDF</Button>
+                <Button variant="outline" onClick={exportExcel} className="h-11 px-5 text-emerald-600 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm rounded-xl transition-all border-emerald-100"><FileSpreadsheet className="h-4 w-4" /> Export Excel</Button>
+                <Button variant="outline" onClick={exportPDF} className="h-11 px-4 text-rose-600 font-bold text-xs bg-white hover:bg-rose-50 shadow-sm rounded-xl transition-all border-rose-100"><FileText className="h-4 w-4" /> Export PDF</Button>
               </div>
             </div>
 
@@ -318,23 +325,23 @@ export default function VisitorBooksPage() {
                 <Table className="min-w-[1800px]">
                   <TableHeader className="bg-zinc-50/50">
                     <TableRow className="border-zinc-100 hover:bg-transparent">
-                      <TableHead className="pl-10 text-[13px] font-medium text-black h-14 w-20" style={{ fontWeight: 500 }}>Sr No</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Operations</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Visitor Name</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Phone</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Id Card No</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Meeting With</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14 text-center" style={{ fontWeight: 500 }}>Person Count</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Purpose</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>In Time</TableHead>
-                      <TableHead className="text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Out Time</TableHead>
-                      <TableHead className="text-right pr-10 text-[13px] font-medium text-black h-14" style={{ fontWeight: 500 }}>Date</TableHead>
+                      <TableHead className="pl-10 text-[13px] font-black text-black h-14 w-20 uppercase font-public-sans">Sr No.</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Operations</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Visitor Name</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Phone</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Id Card No</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Meeting With</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 text-center uppercase font-public-sans">Person Count</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Purpose</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">In Time</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Out Time</TableHead>
+                      <TableHead className="text-right pr-10 text-[13px] font-black text-black h-14 uppercase font-public-sans">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedItems.map((row, index) => (
                       <TableRow key={row.id} className="border-zinc-50 hover:bg-zinc-50/30 transition-none group">
-                        <TableCell className="text-sm font-medium text-zinc-500 pl-10">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell className="text-sm font-bold text-black pl-10 font-public-sans">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={() => { setEditingItem(row); setIsModalOpen(true); }} className="h-8 w-8 text-blue-500 hover:bg-blue-50 transition-none"><Edit2 className="h-3.5 w-3.5" /></Button>
@@ -342,15 +349,15 @@ export default function VisitorBooksPage() {
                             {row.attachmentUrl && (<Button variant="ghost" size="icon" asChild className="h-8 w-8 text-emerald-500 hover:bg-emerald-50 rounded-xl"><a href={row.attachmentUrl} target="_blank"><Paperclip className="h-4 w-4" /></a></Button>)}
                           </div>
                         </TableCell>
-                        <TableCell><span className="text-sm font-bold text-zinc-800 font-mono tracking-tighter uppercase">{row.name}</span></TableCell>
-                        <TableCell><span className="text-sm font-bold text-zinc-400 font-mono tracking-tighter">{row.phone}</span></TableCell>
-                        <TableCell><span className="text-sm font-bold text-zinc-500 font-mono">{row.idCardNo || '-'}</span></TableCell>
-                        <TableCell><span className="text-sm font-bold text-zinc-700">{row.meetingWith}</span></TableCell>
-                        <TableCell className="text-sm font-bold text-zinc-500 text-center">{row.totalPerson}</TableCell>
-                        <TableCell className="text-sm font-bold text-zinc-400 italic max-w-[200px] truncate">"{row.purpose}"</TableCell>
-                        <TableCell className="text-sm font-bold text-zinc-700 font-mono">{row.inTime}</TableCell>
-                        <TableCell className="text-sm font-bold text-zinc-700 font-mono">{row.outTime || 'N/A'}</TableCell>
-                        <TableCell className="text-right pr-10 text-sm font-bold text-zinc-400 font-mono">{row.date}</TableCell>
+                        <TableCell><span className="text-sm font-bold text-black uppercase font-public-sans">{row.name}</span></TableCell>
+                        <TableCell><span className="text-sm font-bold text-black font-mono tracking-tighter font-public-sans">{row.phone}</span></TableCell>
+                        <TableCell><span className="text-sm font-bold text-black font-mono font-public-sans">{row.idCardNo || '-'}</span></TableCell>
+                        <TableCell><span className="text-sm font-bold text-black uppercase font-public-sans">{row.meetingWith}</span></TableCell>
+                        <TableCell className="text-sm font-bold text-black text-center font-public-sans">{row.totalPerson}</TableCell>
+                        <TableCell className="text-sm font-bold text-black italic max-w-[200px] truncate font-public-sans">"{row.purpose}"</TableCell>
+                        <TableCell className="text-sm font-bold text-black font-mono font-public-sans">{row.inTime}</TableCell>
+                        <TableCell className="text-sm font-bold text-black font-mono font-public-sans">{row.outTime || 'N/A'}</TableCell>
+                        <TableCell className="text-right pr-10 text-sm font-bold text-black font-mono font-public-sans">{row.date}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -359,7 +366,7 @@ export default function VisitorBooksPage() {
             </Card>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2 pt-4">
-              <p className="text-[10px] font-medium text-zinc-400">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</p>
+              <p className="text-[10px] font-medium text-zinc-400 uppercase">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} entries</p>
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-4">
                   <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="h-9 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all"><ChevronLeft className="w-4 h-4 mr-2" /> Previous</Button>
@@ -371,9 +378,9 @@ export default function VisitorBooksPage() {
           </div>
 
           <AlertDialog open={!!itemToDelete} onOpenChange={(o) => { if(!o) setItemToDelete(null) }}>
-            <AlertDialogContent className="rounded-3xl border-none shadow-2xl p-10 bg-white">
-              <AlertDialogHeader><div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-rose-50 text-rose-500"><AlertCircle className="w-8 h-8" /></div><AlertDialogTitle className="text-xl font-bold text-zinc-800">Move to Trash?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Are you sure you want to move the visitor record for <span className="text-zinc-900">"{itemToDelete?.name}"</span> to the institutional trash bin?</AlertDialogDescription></AlertDialogHeader>
-              <AlertDialogFooter className="mt-6 gap-3"><AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-500 font-bold h-11 px-6">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl border-none font-bold h-11 px-8 transition-all active:scale-95 shadow-xl shadow-rose-900/20">Move to Trash</AlertDialogAction></AlertDialogFooter>
+            <AlertDialogContent className="rounded-3xl border-none shadow-2xl p-10 bg-white font-public-sans">
+              <AlertDialogHeader><div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-rose-50 text-rose-500"><AlertCircle className="w-8 h-8" /></div><AlertDialogTitle className="text-xl font-bold text-zinc-800">Move To Trash?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Are you sure you want to move the visitor record for <span className="text-zinc-900">"{itemToDelete?.name}"</span> to the institutional trash bin?</AlertDialogDescription></AlertDialogHeader>
+              <AlertDialogFooter className="mt-6 gap-3"><AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-500 font-bold h-11 px-6 uppercase text-[10px]">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl border-none font-bold h-11 px-8 transition-all active:scale-95 shadow-xl shadow-rose-900/20 uppercase text-[10px]">Move To Trash</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </main>

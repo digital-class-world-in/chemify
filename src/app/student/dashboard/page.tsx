@@ -42,7 +42,9 @@ import {
   Loader2,
   Save,
   Library,
-  Book
+  Book,
+  Tag,
+  Check
 } from "lucide-react"
 import { useFirebase, useUser, useTranslation } from "@/firebase"
 import { ref, onValue, off, push, update } from "firebase/database"
@@ -141,7 +143,8 @@ export default function StudentDashboardPage() {
 
     onValue(ref(database, `${rootPath}/marksheets`), (snapshot) => {
       const data = snapshot.val() || {}
-      setMarksheets(Object.values(data).filter((m: any) => m.studentId === currentStudentId))
+      const list = Object.values(data).filter((m: any) => m.studentId === currentStudentId)
+      setMarksheets(list)
     })
 
     onValue(ref(database, `${rootPath}/awarded-certificates/${currentStudentId}`), (snapshot) => {
@@ -167,13 +170,14 @@ export default function StudentDashboardPage() {
   }, [database, resolvedId, studentId, idLoading])
 
   const stats = useMemo(() => {
-    if (!student) return { totalPaid: 0, pending: 0, attendancePercent: 0 }
+    if (!student) return { totalFees: 0, totalPaid: 0, pending: 0, attendancePercent: 0 }
     const totalPaid = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-    const pending = Math.max(0, (Number(student.netFees) || 0) - totalPaid)
+    const totalFees = Number(student?.netFees) || 0
+    const pending = Math.max(0, totalFees - totalPaid)
     const totalDays = attendance.length
     const presentDays = attendance.filter(a => a.status === 'Present').length
     const attendancePercent = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0
-    return { totalPaid, pending, attendancePercent }
+    return { totalFees, totalPaid, pending, attendancePercent }
   }, [student, payments, attendance])
 
   const handleDownloadPDF = (record: any) => {
@@ -240,7 +244,7 @@ export default function StudentDashboardPage() {
               <Sparkles className="w-6 h-6 text-primary animate-pulse" />
               <h2 className="text-3xl font-black text-zinc-800 uppercase tracking-tight leading-none">Welcome, {student?.studentName || "Candidate"}!</h2>
             </div>
-            <p className="text-zinc-500 font-medium leading-relaxed italic max-w-sm">"Your academic journey is live and synchronized with the institute node."</p>
+            <p className="text-zinc-500 font-medium leading-relaxed italic max-sm">"Your academic journey is live and synchronized with the institute node."</p>
             <div className="flex items-center gap-3 pt-2">
               <Badge className="bg-blue-50 text-primary border-none text-[9px] font-black uppercase tracking-widest px-4 py-1.5">Session: {student?.session || '2024-25'}</Badge>
               <Badge className="bg-emerald-50 text-emerald-600 border-none text-[9px] font-black uppercase tracking-widest px-4 py-1.5">Status: Verified</Badge>
@@ -258,11 +262,11 @@ export default function StudentDashboardPage() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <QuickStat color="text-[#1e3a8a]" label="Total Fees" value={`₹${stats.totalFees.toLocaleString()}`} />
         <QuickStat color="text-emerald-600" label="Paid Fees" value={`₹${stats.totalPaid.toLocaleString()}`} />
-        <QuickStat color="text-rose-500" label="Outstanding" value={`₹${stats.pending.toLocaleString()}`} />
+        <QuickStat color="text-rose-500" label="Due Fees" value={`₹${stats.pending.toLocaleString()}`} />
         <QuickStat color="text-indigo-600" label="Attendance" value={`${stats.attendancePercent}%`} />
-        <QuickStat color="text-amber-500" label="Syllabus Nodes" value={eContent.length} />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -379,7 +383,7 @@ export default function StudentDashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {marksheets.map((m, i) => (
-                    <TableRow key={i} className="border-zinc-50 group hover:bg-zinc-50/20 transition-all">
+                    <TableRow key={i} className="border-zinc-50 hover:bg-zinc-50/30 group transition-all">
                       <TableCell className="pl-8 py-4 font-bold text-zinc-700 uppercase">{m.examName}</TableCell>
                       <TableCell className="text-center font-black text-zinc-800">{m.percentage}%</TableCell>
                       <TableCell className="text-center">
@@ -403,7 +407,7 @@ export default function StudentDashboardPage() {
               <Table>
                 <TableHeader className="bg-zinc-50">
                   <TableRow>
-                    <TableHead className="text-[10px] font-black uppercase pl-8 h-14">Exam Title</TableHead>
+                    <TableHead className="pl-8 text-[10px] font-black uppercase h-14">Exam Title</TableHead>
                     <TableHead className="text-[10px] font-black uppercase text-center">Date & Session</TableHead>
                     <TableHead className="text-right pr-8 text-[10px] font-black uppercase">Marks</TableHead>
                   </TableRow>
@@ -538,10 +542,10 @@ export default function StudentDashboardPage() {
                     <AvatarImage src={student?.studentPhotoUrl} />
                     <AvatarFallback className="bg-primary text-white text-4xl font-black">{student?.studentName?.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-2xl shadow-xl border-4 border-white"><ShieldCheck className="w-5 h-5" /></div>
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-lg shadow-md border-2 border-white"><Check className="w-3 h-3 stroke-[4px]" /></div>
                 </div>
                 <div className="text-center space-y-1">
-                  <h4 className="text-2xl font-black text-zinc-800 uppercase tracking-tight">{student?.studentName}</h4>
+                  <h4 className="text-2xl font-black text-zinc-800 uppercase tracking-tight leading-none">{student?.studentName}</h4>
                   <p className="text-primary font-black text-xs uppercase tracking-widest">{student?.course}</p>
                 </div>
                 <div className="w-full grid grid-cols-2 gap-y-6 pt-8 border-t border-zinc-50">

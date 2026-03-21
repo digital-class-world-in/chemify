@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
@@ -25,8 +26,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useFirebase, useUser } from "@/firebase"
 import { ref, onValue, off } from "firebase/database"
 import { toPng } from 'html-to-image'
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
+import { useResolvedId } from "@/hooks/use-resolved-id"
 
 interface Layer {
   id: string
@@ -51,6 +54,8 @@ interface Layer {
 export default function StudentCertificatesPage() {
   const { database } = useFirebase()
   const { user } = useUser()
+  const { toast } = useToast()
+  const { resolvedId, staffId: studentId, isLoading: idLoading } = useResolvedId()
   const canvasRef = useRef<HTMLDivElement>(null)
   
   const [student, setStudent] = useState<any>(null)
@@ -65,43 +70,41 @@ export default function StudentCertificatesPage() {
   const [isDownloading, setIsDownloading] = useState(false)
 
   useEffect(() => {
-    if (!database || !user) return
+    if (!database || !resolvedId || !studentId) {
+      if (!idLoading) setIsLoading(false)
+      return
+    }
     
-    const instRef = ref(database, `Institutes`)
-    onValue(instRef, (snap) => {
-      const institutes = snap.val() || {}
-      let foundStudent = null
-      let adminUid = null
-
-      Object.keys(institutes).forEach(id => {
-        const adms = institutes[id].admissions || {}
-        Object.keys(adms).forEach(aid => {
-          if (adms[aid].email?.toLowerCase() === user.email?.toLowerCase()) {
-            foundStudent = { ...adms[aid], id: aid }
-            adminUid = id
-          }
-        })
-      })
-
-      if (foundStudent && adminUid) {
-        setStudent(foundStudent)
-        const rootPath = `Institutes/${adminUid}`
-        
-        // Fetch Awards
-        onValue(ref(database, `${rootPath}/awarded-certificates/${foundStudent.id}`), (s) => {
-          const data = s.val() || {}
-          setAwards(Object.values(data).reverse())
-        })
-
-        // Fetch Templates
-        onValue(ref(database, `${rootPath}/certificate-templates`), (s) => {
-          const data = s.val() || {}
-          setTemplates(data)
-        })
+    const rootPath = `Institutes/${resolvedId}`
+    
+    // 1. Fetch Student Profile
+    const studentRef = ref(database, `${rootPath}/admissions/${studentId}`)
+    onValue(studentRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setStudent({ ...snapshot.val(), id: studentId })
       }
+    }, { onlyOnce: true })
+
+    // 2. Fetch Awards for THIS student directly
+    const awardsRef = ref(database, `${rootPath}/awarded-certificates/${studentId}`)
+    const unsubAwards = onValue(awardsRef, (s) => {
+      const data = s.val() || {}
+      setAwards(Object.keys(data).map(k => ({ ...data[k], id: k })).reverse())
       setIsLoading(false)
     })
-  }, [database, user])
+
+    // 3. Fetch All Templates (to render the designs)
+    const templatesRef = ref(database, `${rootPath}/certificate-templates`)
+    const unsubTemplates = onValue(templatesRef, (s) => {
+      setTemplates(s.val() || {})
+    })
+
+    return () => {
+      off(studentRef)
+      off(awardsRef)
+      off(templatesRef)
+    }
+  }, [database, resolvedId, studentId, idLoading])
 
   const filteredAwards = useMemo(() => {
     if (!searchTerm) return awards
@@ -129,12 +132,14 @@ export default function StudentCertificatesPage() {
         height: currentTemplate?.frameSize?.height 
       })
       const link = document.createElement('a')
-      link.download = `Certificate_${viewingAward.name}_${student.studentName}.png`
+      link.download = `Certificate_${viewingAward.name}_${student?.studentName || 'Student'}.png`
       link.href = dataUrl
       link.click()
       setZoomLevel(originalZoom)
+      toast({ title: "Certificate Exported", description: "Your verified credential has been downloaded." })
     } catch (err) {
       console.error(err)
+      toast({ variant: "destructive", title: "Export Failed" })
     } finally {
       setIsDownloading(false)
     }
@@ -188,7 +193,7 @@ export default function StudentCertificatesPage() {
     return <div key={l.id} style={style}>{content}</div>
   }
 
-  if (isLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase tracking-[0.2em] animate-pulse">Establishing Academic Credentials...</div>
+  if (isLoading || idLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase tracking-[0.2em] animate-pulse">Establishing Academic Credentials...</div>
 
   return (
     <main className="flex-1 p-8 space-y-10 animate-in fade-in duration-700 max-w-7xl mx-auto pb-32">
@@ -221,7 +226,7 @@ export default function StudentCertificatesPage() {
       {/* 🏅 AWARDS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredAwards.map((award) => (
-          <Card key={award.templateId} className="border-none shadow-sm rounded-[32px] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500">
+          <Card key={award.id} className="border-none shadow-sm rounded-[32px] bg-white overflow-hidden group hover:shadow-2xl transition-all duration-500 relative">
             <div className="h-48 bg-zinc-50 relative flex items-center justify-center overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
               <Award className="w-16 h-16 text-[#1e3a8a]/10 group-hover:scale-110 transition-transform duration-700" />
@@ -233,13 +238,13 @@ export default function StudentCertificatesPage() {
                   <Eye className="w-4 h-4 mr-2" /> View Certificate
                 </Button>
               </div>
-              <Badge className="absolute top-4 right-4 bg-white/90 backdrop-blur-md text-emerald-600 border-none text-[8px] font-black uppercase px-3 shadow-md">Verified</Badge>
+              <Badge className="absolute top-4 right-4 z-30 bg-white/90 backdrop-blur-md text-emerald-600 border-none text-[8px] font-black uppercase px-3 shadow-md">Verified</Badge>
             </div>
             <CardContent className="p-8 space-y-6">
               <div className="space-y-1">
-                <h4 className="text-lg font-black text-zinc-800 uppercase tracking-tight group-hover:text-primary transition-colors">{award.name}</h4>
+                <h4 className="text-lg font-black text-zinc-800 uppercase tracking-tight group-hover:text-primary transition-colors line-clamp-1">{award.name}</h4>
                 <div className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest">
-                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> {student.studentName}
+                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> {student?.studentName || 'Authenticated Member'}
                 </div>
               </div>
               <div className="pt-6 border-t border-zinc-50 flex items-center justify-between">
@@ -247,7 +252,7 @@ export default function StudentCertificatesPage() {
                   <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">Issued On</span>
                   <p className="text-xs font-bold text-zinc-500">{award.issuedDate ? format(new Date(award.issuedDate), "PPP") : "-"}</p>
                 </div>
-                <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl bg-zinc-50 text-zinc-400 hover:text-primary transition-all">
+                <Button variant="ghost" onClick={() => { setViewingAward(award); setIsViewerOpen(true); }} className="h-10 w-10 p-0 rounded-xl bg-zinc-50 text-zinc-400 hover:text-primary transition-all">
                   <Download className="w-4 h-4" />
                 </Button>
               </div>
@@ -257,7 +262,7 @@ export default function StudentCertificatesPage() {
 
         {filteredAwards.length === 0 && (
           <div className="col-span-full py-24 text-center space-y-6 bg-white rounded-[40px] border-2 border-dashed border-zinc-100">
-            <div className="w-20 h-20 bg-zinc-50 rounded-[28px] flex items-center justify-center mx-auto text-zinc-200">
+            <div className="w-20 h-20 bg-zinc-50 rounded-[28px] flex items-center justify-center mx-auto text-zinc-200 shadow-inner">
               <History className="w-10 h-10" />
             </div>
             <div className="space-y-2">
@@ -270,7 +275,7 @@ export default function StudentCertificatesPage() {
 
       {/* 📥 CERTIFICATE VIEWER MODAL */}
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] p-0 border-none rounded-[40px] overflow-hidden bg-zinc-900 shadow-2xl flex flex-col">
+        <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] p-0 border-none rounded-[40px] overflow-hidden bg-zinc-900 shadow-2xl flex flex-col focus:outline-none">
           <div className="h-20 bg-white/5 border-b border-white/5 px-10 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-6">
               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white"><Award className="w-5 h-5" /></div>
@@ -281,14 +286,14 @@ export default function StudentCertificatesPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-white/5 rounded-xl px-4 py-2 flex items-center gap-6 text-white/40">
-                <button onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.1))} className="hover:text-white transition-colors"><ZoomOut className="w-4 h-4" /></button>
+                <button onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.1))} className="hover:text-white transition-colors border-none bg-transparent outline-none cursor-pointer"><ZoomOut className="w-4 h-4" /></button>
                 <span className="text-[10px] font-black uppercase">{Math.round(zoomLevel * 100)}%</span>
-                <button onClick={() => setZoomLevel(z => Math.min(3, z + 0.1))} className="hover:text-white transition-colors"><ZoomIn className="w-4 h-4" /></button>
+                <button onClick={() => setZoomLevel(z => Math.min(3, z + 0.1))} className="hover:text-white transition-colors border-none bg-transparent outline-none cursor-pointer"><ZoomIn className="w-4 h-4" /></button>
               </div>
-              <Button onClick={handleDownload} disabled={isDownloading} className="bg-primary text-white h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border-none shadow-xl">
-                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />} Export PNG
+              <Button onClick={handleDownload} disabled={isDownloading} className="bg-primary text-white h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border-none shadow-xl active:scale-95 transition-all">
+                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />} Export PNG
               </Button>
-              <DialogClose className="rounded-full w-10 h-10 p-0 text-white/40 hover:bg-white/10 hover:text-white transition-colors border-none outline-none"><X className="w-6 h-6" /></DialogClose>
+              <DialogClose className="rounded-full w-10 h-10 p-0 text-white/40 hover:bg-white/10 hover:text-white transition-colors border-none outline-none cursor-pointer"><X className="h-6 w-6" /></DialogClose>
             </div>
           </div>
           
@@ -297,8 +302,8 @@ export default function StudentCertificatesPage() {
               <div 
                 className="relative transition-all duration-300 origin-center"
                 style={{ 
-                  width: `${currentTemplate.frameSize.width}px`, 
-                  height: `${currentTemplate.frameSize.height}px`,
+                  width: `${currentTemplate.frameSize?.width || 1123}px`, 
+                  height: `${currentTemplate.frameSize?.height || 794}px`,
                   transform: `scale(${zoomLevel})`
                 }}
               >
@@ -331,7 +336,7 @@ export default function StudentCertificatesPage() {
 
 function StatCard({ label, value, icon }: any) {
   return (
-    <Card className="border-none shadow-sm rounded-3xl bg-white p-6 group hover:shadow-md transition-all">
+    <Card className="border border-zinc-100 shadow-sm rounded-3xl bg-white p-6 group hover:shadow-md transition-all">
       <div className="flex flex-col gap-4">
         <div className="w-10 h-10 rounded-2xl bg-zinc-50 flex items-center justify-center transition-colors group-hover:bg-white group-hover:shadow-inner">
           {icon}

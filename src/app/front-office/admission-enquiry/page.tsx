@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -46,10 +47,11 @@ import {
   Filter,
   MessageCircle,
   X as CloseIcon,
-  History
+  ChevronDown,
+  Calendar
 } from "lucide-react"
 import { useFirebase } from "@/firebase"
-import { ref, onValue, push, set, remove, off, update } from "firebase/database"
+import { ref, onValue, push, set, remove, off, update, get } from "firebase/database"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useResolvedId } from "@/hooks/use-resolved-id"
@@ -72,6 +74,7 @@ export default function AdmissionEnquiryPage() {
                    pathname.startsWith('/staff') || 
                    (pathname.startsWith('/student') && !pathname.startsWith('/student-information'))
 
+  const { toast } = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
   const [convertingEnquiry, setConvertingEnquiry] = useState<any>(null)
@@ -105,7 +108,6 @@ export default function AdmissionEnquiryPage() {
 
   const { database } = useFirebase()
   const { resolvedId, staffId, branchId, isStaff, isBranch } = useResolvedId()
-  const { toast } = useToast()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const today = useMemo(() => new Date().toISOString().split('T')[0], [])
@@ -164,15 +166,6 @@ export default function AdmissionEnquiryPage() {
     })
   }, [enquiries, searchTerm, filterSources, filterEnquiryFors, filterStatuses, fromDate, toDate, isStaff, staffId, isBranch, branchId])
 
-  const stats = useMemo(() => {
-    return {
-      active: filteredEnquiries.filter(e => e.status === 'Active').length,
-      inactive: filteredEnquiries.filter(e => e.status === 'Inactive').length,
-      total: filteredEnquiries.length,
-      rejected: filteredEnquiries.filter(e => e.status === 'Rejected').length
-    }
-  }, [filteredEnquiries])
-
   const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage)
   const paginatedEnquiries = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -204,10 +197,16 @@ export default function AdmissionEnquiryPage() {
       updatedAt: Date.now()
     }
     const dbPath = `Institutes/${resolvedId}/enquiries`
-    if (editingItem) await update(ref(database, `${dbPath}/${editingItem.id}`), enquiryData)
-    else await set(push(ref(database, dbPath)), { ...enquiryData, createdAt: Date.now() })
-    setIsModalOpen(false); setEditingItem(null); setIsSubmitting(false);
-    toast({ title: "Enquiry Updated" })
+    try {
+      if (editingItem) await update(ref(database, `${dbPath}/${editingItem.id}`), enquiryData)
+      else await set(push(ref(database, dbPath)), { ...enquiryData, createdAt: Date.now() })
+      setIsModalOpen(false); setEditingItem(null);
+      toast({ title: "Enquiry Updated" })
+    } catch (err) {
+      toast({ variant: "destructive", title: "Update Failed" })
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleDelete = async () => {
@@ -247,7 +246,7 @@ export default function AdmissionEnquiryPage() {
         totalFees: 0,
         discount: 0,
         branchId: convertingEnquiry.branchId || null,
-        createdBy: convertingEnquiry.convertingEnquiry || 'admin',
+        createdBy: 'admin',
         createdAt: Date.now(),
         updatedAt: Date.now()
       }
@@ -287,7 +286,75 @@ export default function AdmissionEnquiryPage() {
     else setter([...state, value])
   }
 
-  if (isLoading) return <div className="p-20 text-center font-black text-zinc-300 uppercase animate-pulse tracking-[0.2em]">Connecting to inquiry node...</div>
+  const handleWhatsApp = (row: any) => {
+    const phone = row.enquirerPhoneNumber?.replace(/\D/g, '') || ""
+    if (!phone) {
+      toast({ variant: "destructive", title: "Missing Contact", description: "This lead has no valid phone number recorded." })
+      return
+    }
+    const message = `Hello *${row.enquirerFirstName}*,\n\nGreetings from *${instituteName}*!\n\nThis is regarding your enquiry for the *${row.courseName}* course. We would love to discuss your academic goals further.\n\nAre you available for a quick follow-up?\n\nRegards,\nTeam *${instituteName}*`
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`, '_blank')
+  }
+
+  const downloadSampleCsv = () => {
+    const headers = ["Name", "Email", "Phone", "Course", "Date", "Follow_Up", "Source", "Status", "Demo_Taken", "Category", "City", "State", "Address", "Remark"]
+    const sampleData = [["John Doe", "john@test.com", "9876543210", "Computer Science", today, today, "Website", "Active", "No", "General", "City", "State", "123 Street Address", "Interested in weekend batches"]]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Sample")
+    XLSX.writeFile(wb, "admission_enquiry_sample.csv")
+  }
+
+  const exportExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(filteredEnquiries.map((e, i) => ({
+      "Sr No": i + 1,
+      "Name": e.enquirerFirstName,
+      "Email": e.enquirerEmail || '-',
+      "Phone": e.enquirerPhoneNumber,
+      "Course": e.courseName,
+      "Date": e.enquiryDate,
+      "Source": e.source,
+      "Status": e.status
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Enquiries")
+    XLSX.writeFile(wb, `Admission_Enquiries_${today}.xlsx`)
+  }
+
+  const exportPDF = () => {
+    if (!filteredEnquiries.length) return
+    const doc = new jsPDF('l', 'mm', 'a4')
+    doc.setFontSize(20).setTextColor(13, 148, 136).text(instituteName, 14, 20)
+    doc.setFontSize(12).setTextColor(100).text(`Admission Enquiry Registry - ${format(new Date(), "PP")}`, 14, 30)
+    
+    const tableData = filteredEnquiries.map((e, i) => [
+      i + 1,
+      e.enquirerFirstName,
+      e.enquirerPhoneNumber,
+      e.courseName,
+      e.enquiryDate,
+      e.source || '-',
+      e.status
+    ])
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['#', 'Name', 'Phone', 'Course', 'Date', 'Source', 'Status']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [13, 148, 136] },
+      styles: { fontSize: 9 }
+    })
+
+    doc.save(`Admission_Enquiries_${today}.pdf`)
+  }
+
+  function formatDateDisplay(dateStr: string) {
+    if (!dateStr) return '-'
+    const parts = dateStr.split('-')
+    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`
+    return dateStr
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-body">
@@ -298,7 +365,7 @@ export default function AdmissionEnquiryPage() {
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
             <div>
-              <h2 className="text-[26px] font-normal text-black font-public-sans tracking-tight leading-none uppercase">Admission enquiry</h2>
+              <h2 className="text-[14px] font-normal text-black font-public-sans tracking-tight leading-none uppercase">Admission enquiry</h2>
               <p className="text-sm text-zinc-400 font-medium mt-1">Capture and track student interest</p>
             </div>
             <Dialog open={isModalOpen} onOpenChange={(o) => { setIsModalOpen(o); if(!o) setEditingItem(null); }}>
@@ -308,24 +375,24 @@ export default function AdmissionEnquiryPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl p-0 border border-zinc-200 rounded-[32px] overflow-hidden bg-white shadow-2xl sm:max-w-[850px]">
-                <div className="bg-white px-10 py-6 border-b border-zinc-100"><DialogTitle className="text-xl font-black text-zinc-800">Add New Enquiry</DialogTitle></div>
+                <div className="bg-white px-10 py-6 border-b border-zinc-100"><DialogTitle className="text-xl font-black text-zinc-800 font-public-sans">Add New Enquiry</DialogTitle></div>
                 <ScrollArea className="max-h-[85vh]">
-                  <form onSubmit={handleSaveEnquiry} className="p-8 space-y-8">
+                  <form onSubmit={handleSaveEnquiry} className="p-8 space-y-8 font-public-sans text-[14px]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                       <FormItem label="Name" name="name" defaultValue={editingItem?.enquirerFirstName} required />
                       <FormItem label="Email" name="email" type="email" defaultValue={editingItem?.enquirerEmail} />
-                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Phone *</Label><Input name="phone" type="tel" pattern="[0-9]{10}" maxLength={10} onInput={(e) => e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')} defaultValue={editingItem?.enquirerPhoneNumber} required placeholder="Phone" className="rounded-xl border-zinc-200 h-12 font-bold text-black text-sm" /></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">Phone *</Label><Input name="phone" type="tel" pattern="[0-9]{10}" maxLength={10} onInput={(e) => e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '')} defaultValue={editingItem?.enquirerPhoneNumber} required placeholder="Phone" className="rounded-xl border-zinc-200 h-12 font-bold text-black text-[14px]" /></div>
                       <FormSelect label="Enquire For Course Or Class" name="courseName" defaultValue={editingItem?.courseName} options={dropdownData['course'] || []} onManage={() => openManageModal('course', 'Course')} required />
                       <FormItem label="Enquiry Date" name="enquiryDate" type="date" defaultValue={editingItem?.enquiryDate || today} required />
                       <FormItem label="Follow Up Date" name="followUpDate" type="date" defaultValue={editingItem?.followUpDate} />
                       <FormSelect label="Source" name="source" defaultValue={editingItem?.source || "Direct"} options={dropdownData['source'] || []} onManage={() => openManageModal('source', 'Source')} />
-                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Status</Label><Select name="status" defaultValue={editingItem?.status || "Active"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem><SelectItem value="Done">Done</SelectItem><SelectItem value="Rejected">Rejected</SelectItem></SelectContent></Select></div>
-                      <div className="space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Demo Taken</Label><Select name="demoTaken" defaultValue={editingItem?.demoTaken || "No"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Yes">Yes</SelectItem><SelectItem value="No">No</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">Status</Label><Select name="status" defaultValue={editingItem?.status || "Active"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-[14px]"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="Active" className="text-[14px] font-bold">Active</SelectItem><SelectItem value="Inactive" className="text-[14px] font-bold">Inactive</SelectItem><SelectItem value="Done" className="text-[14px] font-bold">Done</SelectItem><SelectItem value="Rejected" className="text-[14px] font-bold">Rejected</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-1.5"><Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">Demo Taken</Label><Select name="demoTaken" defaultValue={editingItem?.demoTaken || "No"}><SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-[14px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Yes" className="text-[14px] font-bold">Yes</SelectItem><SelectItem value="No" className="text-[14px] font-bold">No</SelectItem></SelectContent></Select></div>
                       <FormSelect label="Enquiry Category" name="enquiryCategory" defaultValue={editingItem?.enquiryCategory || "General"} options={dropdownData['enquiryCategory'] || []} onManage={() => openManageModal('enquiryCategory', 'Category')} />
                       <FormItem label="City" name="city" defaultValue={editingItem?.city} />
                       <FormItem label="State" name="state" defaultValue={editingItem?.state} />
-                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Address</Label><Textarea name="address" defaultValue={editingItem?.address} placeholder="Address" className="rounded-xl min-h-[80px] border-zinc-200 font-bold" /></div>
-                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[10px] font-black text-black tracking-widest ml-1">Remark</Label><Textarea name="remark" defaultValue={editingItem?.remark} placeholder="Remark" className="rounded-xl min-h-[100px] border-zinc-200 font-bold" /></div>
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">Address</Label><Textarea name="address" defaultValue={editingItem?.address} placeholder="Address" className="rounded-xl min-h-[80px] border-zinc-200 font-bold text-[14px]" /></div>
+                      <div className="md:col-span-2 space-y-1.5"><Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">Remark</Label><Textarea name="remark" defaultValue={editingItem?.remark} placeholder="Remark" className="rounded-xl min-h-[100px] border-zinc-200 font-bold text-[14px]" /></div>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="bg-primary hover:opacity-90 text-white rounded-xl h-14 px-12 font-black uppercase text-[10px] tracking-widest shadow-xl border-none active:scale-95 transition-all">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Submit Now</Button>
                   </form>
@@ -338,7 +405,7 @@ export default function AdmissionEnquiryPage() {
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-public-sans text-black tracking-tight">Select Criteria</h3>
               {hasActiveFilters && (
-                <Button onClick={resetFilters} variant="ghost" className="h-8 px-4 text-rose-500 hover:bg-rose-50 rounded-lg text-[10px] font-black tracking-widest gap-2">
+                <Button onClick={resetFilters} variant="ghost" className="h-8 px-4 text-rose-500 hover:bg-rose-50 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2">
                   Reset Filters <X className="w-3 h-3" />
                 </Button>
               )}
@@ -347,8 +414,8 @@ export default function AdmissionEnquiryPage() {
               <MultiCriteriaBox label="Enquiry Source" selected={filterSources} onToggle={(v) => toggleMultiSelect(filterSources, setFilterSources, v)} options={dropdownData['source'] || []} />
               <MultiCriteriaBox label="Enquiry For" selected={filterEnquiryFors} onToggle={(v) => toggleMultiSelect(filterEnquiryFors, setFilterEnquiryFors, v)} options={dropdownData['course'] || []} />
               <MultiCriteriaBox label="Enquiry Status" selected={filterStatuses} onToggle={(v) => toggleMultiSelect(filterStatuses, setFilterStatuses, v)} options={STATUS_OPTIONS} />
-              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest">Enquiry From Date</Label><Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
-              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest">Enquiry To Date</Label><Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
+              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">Enquiry From Date</Label><Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
+              <div className="space-y-2"><Label className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">Enquiry To Date</Label><Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }} className="h-10 rounded-lg border-zinc-200 text-xs font-bold text-zinc-600 shadow-inner bg-white" /></div>
             </div>
           </Card>
 
@@ -365,6 +432,13 @@ export default function AdmissionEnquiryPage() {
                   />
                 </div>
               </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button variant="outline" onClick={downloadSampleCsv} className="h-11 px-5 text-[#0D9488] border-[#0D9488]/20 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm"><Download className="h-4 w-4" /> Sample CSV</Button>
+                <input type="file" ref={fileInputRef} className="hidden" accept=".csv" />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-11 px-5 text-indigo-600 border-indigo-100 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-indigo-50 shadow-sm"><Upload className="h-4 w-4" /> Import CSV</Button>
+                <Button variant="outline" onClick={exportExcel} className="h-11 px-5 text-emerald-600 border-emerald-100 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-emerald-50 shadow-sm"><FileSpreadsheet className="h-4 w-4" /> Export Excel</Button>
+                <Button variant="outline" onClick={exportPDF} className="h-11 px-4 text-rose-600 border-rose-100 rounded-xl transition-none gap-2.5 font-bold text-xs bg-white hover:bg-rose-50 shadow-sm"><FileText className="h-4 w-4" /> Export PDF</Button>
+              </div>
             </div>
 
             <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-white">
@@ -372,22 +446,22 @@ export default function AdmissionEnquiryPage() {
                 <Table className="min-w-[2800px]">
                   <TableHeader className="bg-zinc-50/50">
                     <TableRow className="border-zinc-100 hover:bg-transparent">
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 pl-10 w-20">Sr No.</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Action</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Name</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Email</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Phone</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Program Enquiry</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Enquiry Date</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Follow Up</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Source</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 text-center">Status</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14 text-center">Demo</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Category</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">City</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">State</TableHead>
-                      <TableHead className="text-[13px] font-public-sans text-black tracking-widest h-14">Address</TableHead>
-                      <TableHead className="text-right pr-10 text-[13px] font-public-sans text-black tracking-widest h-14">Remark</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 pl-10 w-20 uppercase">Sr No.</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Action</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Name</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Email</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Phone</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Program Enquiry</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Enquiry Date</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Follow Up</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Source</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 text-center uppercase">Status</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 text-center uppercase">Demo</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Category</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">City</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">State</TableHead>
+                      <TableHead className="text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Address</TableHead>
+                      <TableHead className="text-right pr-10 text-[13px] font-black text-black font-public-sans tracking-widest h-14 uppercase">Remark</TableHead>
                     </TableRow>
                   </TableHeader>  
                   <TableBody>
@@ -396,6 +470,9 @@ export default function AdmissionEnquiryPage() {
                         <TableCell className="text-base font-black text-black font-public-sans pl-10">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
+                            <button onClick={() => handleWhatsApp(row)} className="p-1 hover:bg-zinc-100 rounded-md transition-colors" title="WhatsApp Follow-up">
+                              <img src="https://img.icons8.com/office/40/whatsapp--v1.png" className="w-5 h-5" alt="WhatsApp" />
+                            </button>
                             <button disabled={row.status === 'Done'} onClick={() => { setConvertingEnquiry(row); setIsConvertDialogOpen(true); }} className={cn("p-1", row.status === 'Done' ? "opacity-20 grayscale" : "text-blue-500 hover:bg-blue-50 rounded-md")} title="Convert to Admission"><UserPlus className="h-5 w-5" /></button>
                             <button onClick={() => { setEditingItem(row); setIsModalOpen(true); }} className="p-1 text-zinc-400 hover:text-blue-500 transition-none" title="Edit Enquiry"><Edit2 className="h-4 w-4" /></button>
                             <button onClick={() => { setItemToDelete(row); }} className="p-1 text-zinc-400 hover:text-rose-500 transition-none" title="Delete Enquiry"><Trash2 className="h-4 w-4" /></button>
@@ -405,8 +482,8 @@ export default function AdmissionEnquiryPage() {
                         <TableCell className="text-sm font-normal text-black font-public-sans lowercase">{row.enquirerEmail || '-'}</TableCell>
                         <TableCell className="text-base font-bold text-black font-public-sans font-mono tracking-tighter">{row.enquirerPhoneNumber}</TableCell>
                         <TableCell className="text-sm font-normal text-black font-public-sans">{row.courseName}</TableCell>
-                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{row.enquiryDate}</TableCell>
-                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{row.followUpDate}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{formatDateDisplay(row.enquiryDate)}</TableCell>
+                        <TableCell className="text-sm font-normal text-black font-public-sans font-mono">{formatDateDisplay(row.followUpDate)}</TableCell>
                         <TableCell className="text-sm font-bold text-black font-public-sans">{row.source || '-'}</TableCell>
                         <TableCell className="text-center"><Badge className={cn("rounded-lg px-2.5 py-0.5 text-[9px] font-black border-none shadow-none font-public-sans", row.status === 'Done' ? "bg-emerald-50 text-emerald-600" : row.status === 'Rejected' ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600")}>{row.status || 'Active'}</Badge></TableCell>
                         <TableCell className="text-center"><Badge variant="outline" className="text-[10px] font-black border-zinc-100 text-black font-public-sans">{row.demoTaken || 'No'}</Badge></TableCell>
@@ -423,7 +500,7 @@ export default function AdmissionEnquiryPage() {
             </Card>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
-              <p className="text-[10px] font-black text-zinc-400 tracking-widest">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredEnquiries.length)} of {filteredEnquiries.length} entries</p>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredEnquiries.length)} of {filteredEnquiries.length} entries</p>
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-4 pt-4">
                   <Button variant="ghost" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="h-9 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"><ChevronLeft className="w-4 h-4 mr-2" /> Previous</Button>
@@ -441,8 +518,8 @@ export default function AdmissionEnquiryPage() {
                 <div><AlertDialogTitle className="text-2xl font-black text-zinc-800 tracking-tight">Move To Trash?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Are you sure you want to move the enquiry for <span className="text-zinc-900">"{itemToDelete?.enquirerFirstName}"</span> to the institutional trash? This can be restored later.</AlertDialogDescription></div>
               </AlertDialogHeader>
               <AlertDialogFooter className="mt-8 gap-3">
-                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black h-12 px-8">Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-rose-500 hover:bg-rose-600 text-white transition-all active:scale-95">
+                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black uppercase text-[10px] tracking-widest h-12 px-8">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-rose-500 hover:bg-rose-600 text-white transition-all active:scale-95 uppercase text-[10px]">
                   {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Move To Trash"}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -456,14 +533,14 @@ export default function AdmissionEnquiryPage() {
                 <div><AlertDialogTitle className="text-2xl font-black text-zinc-800 tracking-tight">Convert To Admission?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-bold">Register <span className="text-zinc-900">"{convertingEnquiry?.enquirerFirstName}"</span> as an official student. This action moves the lead to the admission registry.</AlertDialogDescription></div>
               </AlertDialogHeader>
               <AlertDialogFooter className="mt-8 gap-3">
-                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black h-12 px-8">Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConvertToAdmission} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-primary hover:bg-emerald-600 text-white transition-all active:scale-95">Confirm Register</AlertDialogAction>
+                <AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-400 font-black h-12 px-8 uppercase text-[10px]">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConvertToAdmission} className="rounded-xl font-black h-12 px-8 border-none shadow-lg bg-primary hover:bg-emerald-600 text-white transition-all active:scale-95 uppercase text-[10px]">Confirm Register</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
 
           <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
-            <DialogContent className="max-w-md rounded-[32px] p-10 bg-white border-none shadow-2xl">
+            <DialogContent className="max-w-md rounded-[32px] p-10 bg-white border-none shadow-2xl font-public-sans text-[14px]">
               <div className="flex items-center justify-between mb-8"><DialogTitle className="text-xl font-black text-zinc-800">Manage {activeManageField?.label}</DialogTitle></div>
               <div className="flex gap-2 mb-8"><Input value={newOptionValue} onChange={(e) => setNewOptionValue(e.target.value)} placeholder="Enter new..." className="rounded-xl h-12 font-bold" /><Button onClick={handleSaveOption} className="bg-primary text-white rounded-xl px-8 h-12 border-none shadow-lg active:scale-95 transition-all">Save</Button></div>
               <ScrollArea className="h-64 pr-4"><div className="space-y-2">{(dropdownData[activeManageField?.key || ''] || []).map(opt => (
@@ -514,11 +591,46 @@ function MultiCriteriaBox({ label, selected, onToggle, options }: { label: strin
   )
 }
 
+function CriteriaRadioBox({ label, value, onChange, options }: { label: string, value: string, onChange: (v: string) => void, options: any[] }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest ml-1">{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="w-full h-11 px-4 rounded-xl border border-zinc-200 bg-white flex items-center justify-between text-xs font-bold text-zinc-600 shadow-inner group hover:border-primary transition-all">
+            <span className="truncate">{value === 'all' ? `Select` : value}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-300 group-hover:text-primary" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-0 rounded-2xl overflow-hidden border-zinc-100 shadow-2xl">
+          <div className="bg-zinc-50 p-4 border-b border-zinc-100 flex justify-between items-center">
+            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Select {label}</p>
+          </div>
+          <ScrollArea className="h-64">
+            <RadioGroup value={value} onValueChange={onChange} className="p-2 space-y-1">
+              <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors group">
+                <RadioGroupItem value="all" id={`${label}-all`} className="text-primary border-zinc-300" />
+                <Label htmlFor={`${label}-all`} className="text-xs font-bold text-zinc-600 uppercase cursor-pointer flex-1">All {label}s</Label>
+              </div>
+              {options.map(opt => (
+                <div key={opt.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors group">
+                  <RadioGroupItem value={opt.value} id={`${label}-${opt.id}`} className="text-primary border-zinc-300" />
+                  <Label htmlFor={`${label}-${opt.id}`} className="text-xs font-bold text-zinc-600 uppercase cursor-pointer flex-1">{opt.value}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
 function FormItem({ label, name, type = "text", required = false, defaultValue, maxLength, placeholder }: any) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[10px] font-black text-black tracking-widest ml-1">{label} {required && "*"}</Label>
-      <Input name={name} type={type} required={required} defaultValue={defaultValue} maxLength={maxLength} placeholder={placeholder || label} className="rounded-xl border-zinc-200 h-12 font-bold text-black text-sm focus-visible:ring-primary" />
+      <Label className="text-[14px] font-black text-black tracking-widest ml-1 uppercase">{label} {required && "*"}</Label>
+      <Input name={name} type={type} required={required} defaultValue={defaultValue} maxLength={maxLength} placeholder={placeholder || label} className="rounded-xl border-zinc-200 h-12 font-bold text-black text-[14px] focus-visible:ring-primary" />
     </div>
   )
 }
@@ -527,12 +639,12 @@ function FormSelect({ label, name, options, onManage, defaultValue, required = f
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center px-1">
-        <Label className="text-[10px] font-black text-black tracking-widest">{label} {required && "*"}</Label>
+        <Label className="text-[14px] font-black text-black tracking-widest uppercase">{label} {required && "*"}</Label>
         <button type="button" onClick={onManage} className="text-[9px] font-bold text-blue-600 hover:underline">Manage <Settings2 className="w-2.5 h-2.5 inline" /></button>
       </div>
       <Select name={name} defaultValue={defaultValue} required={required}>
-        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-primary transition-none"><SelectValue placeholder="Select" /></SelectTrigger>
-        <SelectContent className="rounded-xl border-zinc-100 shadow-xl">{options.map((opt: any) => (<SelectItem key={opt.id} value={opt.value} className="rounded-lg font-bold text-[10px]">{opt.value}</SelectItem>))}</SelectContent>
+        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-primary transition-none text-[14px]"><SelectValue placeholder="Select" /></SelectTrigger>
+        <SelectContent className="rounded-xl border-zinc-100 shadow-xl">{options.map((opt: any) => (<SelectItem key={opt.id} value={opt.value} className="rounded-lg font-bold text-[14px] uppercase">{opt.value}</SelectItem>))}</SelectContent>
       </Select>
     </div>
   )

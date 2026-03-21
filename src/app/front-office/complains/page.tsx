@@ -180,27 +180,16 @@ export default function ComplainsPage() {
   }
 
   const resetFilters = () => {
-    setSearchTerm("")
-    setFromDate("")
-    setToDate("")
-    setFilterType("all")
-    setFilterStatus("all")
-    setCurrentPage(1)
+    setSearchTerm(""); setFromDate(""); setToDate(""); setFilterType("all"); setFilterStatus("all"); setCurrentPage(1);
   }
 
-  const downloadSampleCSV = () => {
-    const ws = XLSX.utils.json_to_sheet([{ 
-      Complain_By: "John Doe", 
-      Phone: "9876543210", 
-      Type: "Maintenance", 
-      Status: "Unsolved", 
-      Date: today, 
-      Description: "AC not working in Room 101",
-      Action_Taken: "N/A"
-    }])
+  const downloadSampleCsv = () => {
+    const headers = ["Complain_By", "Phone", "Type", "Status", "Date", "Description", "Action_Taken"]
+    const sampleData = [["John Doe", "9876543210", "Facility", "Unsolved", today, "AC not working", "N/A"]]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Sample")
-    XLSX.writeFile(wb, "complain_import_sample.csv")
+    XLSX.writeFile(wb, "complaints_sample.csv")
   }
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,7 +274,7 @@ export default function ComplainsPage() {
         <main className="flex-1 p-8 space-y-10 animate-in fade-in duration-500 w-full overflow-x-hidden">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-            <h2 className="text-3xl font-normal text-zinc-800 font-headline tracking-tight leading-none">Complains ({filteredItems.length})</h2>
+            <h2 className="text-[14px] font-normal text-zinc-800 font-headline tracking-tight leading-none uppercase">Complains ({filteredItems.length})</h2>
             <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if(!open) { setEditingItem(null); setSelectedFile(null); } }}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingItem(null)} className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-10 font-medium text-base border-none shadow-lg active:scale-95 transition-all">
@@ -294,19 +283,19 @@ export default function ComplainsPage() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl p-0 border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-2xl">
                 <div className="bg-white px-8 py-4 border-b border-zinc-100">
-                  <DialogTitle className="text-lg font-bold text-zinc-800">{editingItem ? 'Edit' : 'New'} Complain Entry</DialogTitle>
+                  <DialogTitle className="text-lg font-bold text-zinc-800 font-public-sans">{editingItem ? 'Edit' : 'New'} Complain Entry</DialogTitle>
                 </div>
                 <ScrollArea className="max-h-[75vh]">
-                  <form onSubmit={handleSave} className="p-8 space-y-6">
+                  <form onSubmit={handleSave} className="p-8 space-y-6 font-public-sans text-[14px]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Complain By</Label><Input name="complainBy" defaultValue={editingItem?.complainBy} required className="rounded-xl h-11" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Phone</Label><Input name="phone" type="text" maxLength={10} defaultValue={editingItem?.phone} required className="rounded-xl h-11" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Complain Type</Label><Input name="type" defaultValue={editingItem?.type} className="rounded-xl h-11" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Date</Label><Input name="date" type="date" defaultValue={editingItem?.date || today} required className="rounded-xl h-11" /></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Status</Label><Select name="status" defaultValue={editingItem?.status || "Unsolved"}><SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="InProgress">In Progress</SelectItem><SelectItem value="Solved">Solved</SelectItem><SelectItem value="Unsolved">Unsolved</SelectItem></SelectContent></Select></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Assigned To</Label><Input name="assigned" defaultValue={editingItem?.assigned} className="rounded-xl h-11" /></div>
-                      <div className="md:col-span-2 space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Description</Label><Input name="description" defaultValue={editingItem?.description} required className="rounded-xl h-11" /></div>
-                      <div className="md:col-span-2 space-y-1"><Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Action Taken</Label><Textarea name="actionTaken" defaultValue={editingItem?.actionTaken} className="rounded-xl min-h-[80px]" /></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Complain By</Label><Input name="complainBy" defaultValue={editingItem?.complainBy} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Phone</Label><Input name="phone" type="text" maxLength={10} defaultValue={editingItem?.phone} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Complain Type</Label><Input name="type" defaultValue={editingItem?.type} className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Date</Label><Input name="date" type="date" defaultValue={editingItem?.date || today} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Status</Label><Select name="status" defaultValue={editingItem?.status || "Unsolved"}><SelectTrigger className="rounded-xl h-11 font-bold text-[14px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="InProgress" className="text-[14px] font-bold">In Progress</SelectItem><SelectItem value="Solved" className="text-[14px] font-bold">Solved</SelectItem><SelectItem value="Unsolved" className="text-[14px] font-bold">Unsolved</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Assigned To</Label><Input name="assigned" defaultValue={editingItem?.assigned} className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="md:col-span-2 space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Description</Label><Input name="description" defaultValue={editingItem?.description} required className="rounded-xl h-11 font-bold text-black text-[14px]" /></div>
+                      <div className="md:col-span-2 space-y-1"><Label className="text-[14px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Action Taken</Label><Textarea name="actionTaken" defaultValue={editingItem?.actionTaken} className="rounded-xl min-h-[80px] font-bold text-black text-[14px]" /></div>
                     </div>
                     <Button type="submit" disabled={isSubmitting} className="w-fit h-10 px-10 bg-primary hover:opacity-90 text-white rounded-xl font-medium uppercase text-[10px] tracking-widest shadow-lg border-none active:scale-95 transition-all">{isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Submit Record"}</Button>
                   </form>
@@ -333,7 +322,7 @@ export default function ComplainsPage() {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
               <div className="relative group w-full md:w-80">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-300 group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400 group-focus-within:text-primary transition-colors" />
                 <Input
                   placeholder="Search..."
                   value={searchTerm}
@@ -342,9 +331,9 @@ export default function ComplainsPage() {
                 />
               </div>
               <div className="flex items-center gap-3 flex-wrap">
-                <Button variant="outline" onClick={downloadSampleCSV} className="h-11 px-5 text-[#0D9488] border-[#0D9488]/20 rounded-xl transition-none gap-2 font-normal text-xs bg-white hover:bg-emerald-50 shadow-sm"><Download className="h-4 w-4" /> Sample CSV</Button>
+                <Button variant="outline" onClick={downloadSampleCsv} className="h-11 px-5 text-[#0D9488] border-[#0D9488]/20 rounded-xl transition-none gap-2 font-normal text-xs bg-white hover:bg-emerald-50 shadow-sm"><Download className="h-4 w-4" /> Sample CSV</Button>
                 <input type="file" ref={fileInputRef} onChange={handleImportCSV} className="hidden" accept=".csv" />
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-11 px-5 text-indigo-600 border-indigo-100 rounded-xl transition-none gap-2 font-normal text-xs bg-white hover:bg-indigo-50 shadow-sm"><Upload className="h-4 w-4" /> Import CSV</Button>
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="h-11 px-5 text-indigo-600 border-indigo-100 rounded-xl transition-none gap-2 font-bold text-xs bg-white hover:bg-indigo-50 shadow-sm"><Upload className="h-4 w-4" /> Import CSV</Button>
                 <Button variant="outline" onClick={exportExcel} className="h-11 px-5 text-emerald-600 border-emerald-100 rounded-xl transition-none gap-2 font-normal text-xs bg-white hover:bg-emerald-50 shadow-sm"><FileSpreadsheet className="h-4 w-4" /> Export Excel</Button>
                 <Button variant="outline" onClick={exportPDF} className="h-11 px-4 text-rose-600 border-rose-100 rounded-xl transition-none gap-2.5 font-bold text-xs bg-white hover:bg-rose-50 shadow-sm"><FileText className="h-4 w-4" /> Export PDF</Button>
               </div>
@@ -355,18 +344,18 @@ export default function ComplainsPage() {
                 <Table className="min-w-[1200px]">
                   <TableHeader className="bg-zinc-50/50">
                     <TableRow className="border-zinc-100">
-                      <TableHead className="pl-8 text-xs font-medium text-black h-14 w-20" style={{ fontWeight: 500 }}>Sr No.</TableHead>
-                      <TableHead className="text-xs font-medium text-black h-14" style={{ fontWeight: 500 }}>Actions</TableHead>
-                      <TableHead className="text-xs font-medium text-black h-14" style={{ fontWeight: 500 }}>Complain By</TableHead>
-                      <TableHead className="text-xs font-medium text-black h-14 text-center" style={{ fontWeight: 500 }}>Status</TableHead>
-                      <TableHead className="text-xs font-medium text-black h-14" style={{ fontWeight: 500 }}>Type</TableHead>
-                      <TableHead className="text-right pr-8 text-xs font-medium text-black h-14" style={{ fontWeight: 500 }}>Date</TableHead>
+                      <TableHead className="pl-10 text-[13px] font-black text-black h-14 w-20 uppercase font-public-sans">Sr No.</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Actions</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Complain By</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 text-center uppercase font-public-sans">Status</TableHead>
+                      <TableHead className="text-[13px] font-black text-black h-14 uppercase font-public-sans">Type</TableHead>
+                      <TableHead className="text-right pr-10 text-[13px] font-black text-black h-14 uppercase font-public-sans">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedItems.map((row, index) => (
-                      <TableRow key={row.id} className="border-zinc-50">
-                        <TableCell className="text-sm font-medium text-zinc-500 pl-8">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                      <TableRow key={row.id} className="border-zinc-50 hover:bg-zinc-50/30 transition-none group">
+                        <TableCell className="text-sm font-bold text-black pl-10 font-public-sans">{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={() => { setEditingItem(row); setIsModalOpen(true); }} className="h-8 w-8 text-blue-500 hover:bg-blue-50 transition-none"><Edit2 className="h-3.5 w-3.5" /></Button>
@@ -374,15 +363,15 @@ export default function ComplainsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-base font-bold text-zinc-400 font-mono tracking-tighter uppercase">{row.complainBy}</span>
+                          <span className="text-base font-bold text-black uppercase font-public-sans">{row.complainBy}</span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge className={cn("rounded-lg text-[9px] font-black uppercase border-none shadow-none", row.status === 'Solved' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
+                          <Badge className={cn("rounded-lg text-[9px] font-black uppercase border-none shadow-none font-public-sans", row.status === 'Solved' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600")}>
                             {row.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-zinc-500 uppercase">{row.type}</TableCell>
-                        <TableCell className="text-right pr-8 text-sm text-zinc-500 font-medium">{row.date}</TableCell>
+                        <TableCell className="text-sm text-black uppercase font-bold font-public-sans">{row.type}</TableCell>
+                        <TableCell className="text-right pr-10 text-sm text-black font-bold font-public-sans">{row.date}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -403,9 +392,9 @@ export default function ComplainsPage() {
           </div>
 
           <AlertDialog open={!!itemToDelete} onOpenChange={(o) => { if(!o) setItemToDelete(null) }}>
-            <AlertDialogContent className="rounded-3xl border-none shadow-2xl p-10 bg-white">
+            <AlertDialogContent className="rounded-3xl border-none shadow-2xl p-10 bg-white font-public-sans">
               <AlertDialogHeader><div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-rose-50 text-rose-500"><AlertCircle className="w-8 h-8" /></div><AlertDialogTitle className="text-xl font-bold text-zinc-800">Move To Trash?</AlertDialogTitle><AlertDialogDescription className="text-zinc-500 text-sm leading-relaxed font-medium">Are you sure you want to move the complaint for <span className="font-bold text-zinc-900">"{itemToDelete?.complainBy}"</span> to the institutional trash bin?</AlertDialogDescription></AlertDialogHeader>
-              <AlertDialogFooter className="mt-6 gap-3"><AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-500 font-bold h-11 px-6">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl border-none font-bold h-11 px-8">Move To Trash</AlertDialogAction></AlertDialogFooter>
+              <AlertDialogFooter className="mt-6 gap-3"><AlertDialogCancel className="rounded-xl border-zinc-100 text-zinc-500 font-bold h-11 px-6 uppercase text-[10px]">Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl border-none font-bold h-11 px-8 uppercase text-[10px]">Move To Trash</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </main>

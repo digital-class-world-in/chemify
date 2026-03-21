@@ -113,20 +113,20 @@ export default function EmployeeIdCardsPage() {
         <main className="flex-1 p-8 space-y-8 animate-in fade-in duration-500">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h2 className="text-3xl font-bold text-zinc-900 font-headline uppercase tracking-tight">Employee ID Cards</h2>
+              <h2 className="text-3xl font- public-sans text-zinc-900 font-headline uppercase tracking-tight">Employee ID Cards</h2>
               <p className="text-sm text-zinc-500 font-medium">Process and design staff identity credentials</p>
             </div>
             
             <div className="flex items-center gap-3">
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-8 font-bold text-sm flex items-center gap-2 shadow-lg border-none transition-all active:scale-95">
+                  <Button className="bg-primary hover:opacity-90 text-white rounded-xl h-11 px-8 font- public-sans text-sm flex items-center gap-2 shadow-lg border-none transition-all active:scale-95">
                     <Plus className="h-4 w-4" /> Generate ID Card
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl p-0 border border-zinc-200 rounded-2xl overflow-hidden bg-white sm:max-w-[95vw]">
                   <div className="bg-white px-8 py-5 border-b border-zinc-100 flex items-center justify-between">
-                    <DialogTitle className="text-xl font-bold text-zinc-800">New ID Card Design</DialogTitle>
+                    <DialogTitle className="text-xl font- public-sans text-zinc-800">New ID Card Design</DialogTitle>
                     <DialogClose className="p-2 hover:bg-zinc-50 rounded-full transition-none border-none outline-none">
                       <X className="h-5 w-5 text-zinc-400" />
                     </DialogClose>
@@ -136,7 +136,7 @@ export default function EmployeeIdCardsPage() {
                     <div className="p-8 space-y-8">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Background Image</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Background Image</Label>
                           <Select defaultValue="frame1">
                             <SelectTrigger className="h-11 rounded-lg border-zinc-200"><SelectValue placeholder="Select Frame" /></SelectTrigger>
                             <SelectContent>
@@ -147,25 +147,25 @@ export default function EmployeeIdCardsPage() {
                           </Select>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Institute Logo</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Institute Logo</Label>
                           <div className="relative group">
                             <Input type="file" className="h-11 rounded-lg border-zinc-200 file:hidden pr-10 cursor-pointer bg-zinc-50/50" />
                             <Upload className="absolute right-3 top-3 h-4 w-4 text-zinc-300 pointer-events-none" />
                           </div>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Institute Name</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Institute Name</Label>
                           <Input defaultValue={instituteName} className="h-11 rounded-lg border-zinc-200" />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">ID Card Title</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">ID Card Title</Label>
                           <Input placeholder="Staff Identity Card" className="h-11 rounded-lg border-zinc-200" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Header Color</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Header Color</Label>
                           <div className="flex items-center gap-3">
                             <Input type="color" defaultValue="#0D9488" className="w-12 h-11 p-1 rounded-lg border-zinc-200 cursor-pointer" />
                             <div className="h-1 w-full bg-primary rounded-full" />
@@ -174,27 +174,27 @@ export default function EmployeeIdCardsPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Institute Contact Info</Label>
+                        <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Institute Contact Info</Label>
                         <Input placeholder="Address, Phone, Email for footer..." className="h-11 rounded-lg border-zinc-200" />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Staff Name</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Staff Name</Label>
                           <Input className="h-11 rounded-lg border-zinc-200" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Staff ID</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Staff ID</Label>
                           <Input className="h-11 rounded-lg border-zinc-200" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Designation</Label>
+                          <Label className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Designation</Label>
                           <Input className="h-11 rounded-lg border-zinc-200" />
                         </div>
                       </div>
 
                       <div className="pt-4">
-                        <Button type="button" className="bg-primary hover:opacity-90 text-white rounded-xl h-12 px-12 font-bold shadow-lg border-none transition-all active:scale-95">
+                        <Button type="button" className="bg-primary hover:opacity-90 text-white rounded-xl h-12 px-12 font- public-sans shadow-lg border-none transition-all active:scale-95">
                           Generate & Save Design
                         </Button>
                       </div>
@@ -208,9 +208,9 @@ export default function EmployeeIdCardsPage() {
           <Card className="border-none shadow-sm rounded-2xl bg-white p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Filter by Department</span>
+                <span className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest ml-1">Filter by Department</span>
                 <Select value={selectedDept} onValueChange={setSelectedDept}>
-                  <SelectTrigger className="rounded-xl h-11 bg-zinc-50 border-none font-bold text-zinc-600 transition-none">
+                  <SelectTrigger className="rounded-xl h-11 bg-zinc-50 border-none font- public-sans text-zinc-600 transition-none">
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent>
@@ -220,14 +220,14 @@ export default function EmployeeIdCardsPage() {
                 </Select>
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Search Staff Records</span>
+                <span className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest ml-1">Search Staff Records</span>
                 <div className="relative">
                   <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400" />
                   <Input 
                     value={searchTerm} 
                     onChange={(e) => setSearchTerm(e.target.value)} 
                     placeholder="Search by Name or Employee ID..." 
-                    className="pl-11 h-11 rounded-xl bg-zinc-50 border-none font-bold text-zinc-700 transition-none focus-visible:ring-primary" 
+                    className="pl-11 h-11 rounded-xl bg-zinc-50 border-none font- public-sans text-zinc-700 transition-none focus-visible:ring-primary" 
                   />
                 </div>
               </div>
@@ -239,12 +239,12 @@ export default function EmployeeIdCardsPage() {
               <Table>
                 <TableHeader className="bg-zinc-50/50">
                   <TableRow className="border-zinc-100 hover:bg-transparent">
-                    <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14 pl-8">SR NO.</TableHead>
-                    <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14">Employee Name</TableHead>
-                    <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14">Employee ID</TableHead>
-                    <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14">Designation</TableHead>
-                    <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14">Department</TableHead>
-                    <TableHead className="text-right pr-8 text-[11px] font-bold text-zinc-400 uppercase tracking-widest h-14">Actions</TableHead>
+                    <TableHead className="text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14 pl-8">SR NO.</TableHead>
+                    <TableHead className="text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14">Employee Name</TableHead>
+                    <TableHead className="text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14">Employee ID</TableHead>
+                    <TableHead className="text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14">Designation</TableHead>
+                    <TableHead className="text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14">Department</TableHead>
+                    <TableHead className="text-right pr-8 text-[11px] font- public-sans text-zinc-400 uppercase tracking-widest h-14">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -264,13 +264,13 @@ export default function EmployeeIdCardsPage() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8 rounded-lg shadow-sm border border-zinc-100">
                               <AvatarImage src={`https://picsum.photos/seed/${emp.id}/32/32`} />
-                              <AvatarFallback className="text-[10px] font-bold bg-zinc-100 text-zinc-400">{emp.firstName?.charAt(0)}</AvatarFallback>
+                              <AvatarFallback className="text-[10px] font- public-sans bg-zinc-100 text-zinc-400">{emp.firstName?.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-bold text-zinc-800 uppercase font-headline">{emp.firstName} {emp.lastName}</span>
+                            <span className="text-sm font- public-sans text-zinc-800 uppercase font-headline">{emp.firstName} {emp.lastName}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm font-bold text-primary font-mono">{emp.employeeId || '-'}</TableCell>
-                        <TableCell className="text-sm text-zinc-500 font-bold uppercase">{emp.designation}</TableCell>
+                        <TableCell className="text-sm font- public-sans text-primary font-mono">{emp.employeeId || '-'}</TableCell>
+                        <TableCell className="text-sm text-zinc-500 font- public-sans uppercase">{emp.designation}</TableCell>
                         <TableCell className="text-sm text-zinc-500 font-medium">{emp.department}</TableCell>
                         <TableCell className="text-right pr-6">
                           <div className="flex items-center justify-end gap-1">
@@ -321,7 +321,7 @@ export default function EmployeeIdCardsPage() {
                 <div className="bg-primary p-8 text-center space-y-1 relative">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
                   <h3 className="text-white font-black uppercase text-sm tracking-[0.2em]">{instituteName}</h3>
-                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.3em]">Staff Identity</p>
+                  <p className="text-white/60 text-[10px] font- public-sans uppercase tracking-[0.3em]">Staff Identity</p>
                 </div>
                 <div className="p-10 flex flex-col items-center gap-8">
                   <div className="relative">
@@ -339,19 +339,19 @@ export default function EmployeeIdCardsPage() {
                   </div>
                   <div className="w-full grid grid-cols-2 gap-y-6 pt-8 border-t border-zinc-50">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Staff ID</p>
+                      <p className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Staff ID</p>
                       <p className="text-sm font-black text-zinc-700">{emp.employeeId || 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Department</p>
+                      <p className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Department</p>
                       <p className="text-sm font-black text-zinc-700">{emp.department || 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Contact</p>
+                      <p className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Contact</p>
                       <p className="text-sm font-black text-zinc-700">{emp.phone || 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Joined On</p>
+                      <p className="text-[10px] font- public-sans text-zinc-400 uppercase tracking-widest">Joined On</p>
                       <p className="text-sm font-black text-zinc-700">{emp.joiningDate || 'N/A'}</p>
                     </div>
                   </div>

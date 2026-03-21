@@ -385,11 +385,43 @@ export default function StudentAdmissionPage() {
                     <div className="space-y-8">
                       <h3 className="text-sm font-bold text-[#0D9488] uppercase tracking-[0.2em] border-b border-zinc-50 pb-2">Academic Information</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                        <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Admission No. *</Label><Input name="admissionNo" defaultValue={editingStudent?.admissionNo || nextAdmissionNo} required className="rounded-xl border-zinc-200 h-12 font-normal text-black text-sm focus-visible:ring-primary" placeholder={editingStudent ? "" : "Auto-generated"} /></div>
+                        <div className="space-y-1.5">
+    <Label className="text-[12px] font-medium text-black ml-1">Admission No. *</Label>
+    <div className="h-12 px-4 rounded-xl border border-zinc-200 bg-zinc-50/70 flex items-center text-sm font-mono font-medium text-zinc-800 shadow-inner">
+      {editingStudent ? editingStudent.admissionNo : nextAdmissionNo}
+    </div>
+    {/* Hidden input so it still gets submitted */}
+    <input 
+      type="hidden" 
+      name="admissionNo" 
+      value={editingStudent ? editingStudent.admissionNo : nextAdmissionNo} 
+    />
+  </div>
                         <div className="space-y-1.5"><Label className="text-[12px] font-medium text-black ml-1">Roll No *</Label><Input name="rollNo" defaultValue={editingStudent?.rollNo || nextRollNo} required className="rounded-xl border-zinc-200 h-12 font-normal text-black text-sm focus-visible:ring-primary" placeholder={editingStudent ? "" : "Auto-generated"} /></div>
-                        
-                        <FormSelect label="Class" name="course" defaultValue={editingStudent?.course} options={dropdownData['course'] || []} onManage={() => openManageModal('course', 'Class/Course')} required />
-                        <FormSelect label="Course" name="courseName" defaultValue={editingStudent?.courseName || editingStudent?.course} options={dropdownData['course'] || []} onManage={() => openManageModal('course', 'Course/Class')} required />
+                  <FormSelect 
+  label="Class"
+  name="class"
+  defaultValue={editingStudent?.class}
+  options={dropdownData.class || []}
+  onManage={() => openManageModal('class', 'Classes')}
+  required
+/>
+
+<FormSelect 
+  label="Course"
+  name="course"
+  defaultValue={editingStudent?.course}
+  options={dropdownData.course || []}
+  onManage={() => openManageModal('course', 'Courses')}
+  required
+/>
+<FormSelect 
+    label="Section" 
+    name="section" 
+    defaultValue={editingStudent?.section} 
+    options={dropdownData['section'] || []} 
+    onManage={() => openManageModal('section', 'Section')} 
+  />
                         
                         <FormSelect label="Section" name="section" defaultValue={editingStudent?.section} options={dropdownData['section'] || []} onManage={() => openManageModal('section', 'Section')} />
                         <FormSelect label="Batch" name="batch" defaultValue={editingStudent?.batch} options={batches.map(b => ({ id: b.id, value: b.batchName, label: `${b.batchName} - ${b.courseName}` }))} required />
