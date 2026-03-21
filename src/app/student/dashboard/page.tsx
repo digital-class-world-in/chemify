@@ -613,4 +613,3 @@ function CardMeta({ label, value }: any) {
     </div>
   )
 }
-  
