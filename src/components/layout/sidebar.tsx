@@ -76,7 +76,7 @@ interface MenuItem {
 }
 
 export const sidebarMenu: MenuItem[] = [
-  { id: 'dashboard', nameKey: 'dashboard', href: '/', icon: LayoutGrid, color: "text-blue-500" },
+  { id: 'dashboard', nameKey: 'dashboard', href: '/dashboard', icon: LayoutGrid, color: "text-blue-500" },
   { 
     id: 'website_mgmt', 
     nameKey: 'website_mgmt', 
@@ -277,7 +277,7 @@ export function Sidebar() {
     <div className="hidden lg:flex lg:flex-col lg:w-[300px] lg:fixed lg:inset-y-0 bg-white z-50 font-public-sans border-r border-zinc-100 shadow-sm">
       <div className="h-20 flex items-center justify-center px-8 border-b border-zinc-50">
         {profile?.logoUrl ? (
-          <div className="relative w-full h-12">
+          <div className="relative w-full h-24">
             <Image src={profile.logoUrl} alt="Logo" fill className="object-contain" priority />
           </div>
         ) : (
